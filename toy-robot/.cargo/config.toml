@@ -1,0 +1,2 @@
+[target.arm-unknown-linux-gnueabi]
+linker = "C:/Users/Public/wpilib/2023/roborio-academic/bin/arm-frc2023-linux-gnueabi-gcc"

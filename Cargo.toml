@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "wpilib_hal_ffi",
+    "xtask",
+    "frc-lib",
+    "toy-robot",
+]

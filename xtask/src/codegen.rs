@@ -1,6 +1,12 @@
 use std::{error::Error, path::{Path, PathBuf}, io::{Cursor, Read}};
 
 mod wpilib_hal_ffi;
+mod wpilib_wpiutil_ffi;
+mod libraries;
+
+const WPILIB_YEAR: &'static str = "2023";
+const WPILIB_VERSION: &'static str = "2023.4.3";
+const NI_VERSION: &'static str = "2023.3.0";
 
 pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error>> {
     std::fs::remove_dir_all(header_folder()).unwrap_or_else(|err| match err.kind() {
@@ -12,11 +18,13 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
         Some(t) => {
             match t.as_str() {
                 "wpilib_hal_ffi" => wpilib_hal_ffi::generate_bindings()?,
+                "wpilib_wpiutil_ffi" => wpilib_wpiutil_ffi::generate_bindings()?,
                 invalid => return Err(format!("Invalid crate name: {invalid}").into()),
             }
         },
         None => {
             wpilib_hal_ffi::generate_bindings()?;
+            wpilib_wpiutil_ffi::generate_bindings()?;
         },
     }
     Ok(())
@@ -45,12 +53,12 @@ pub fn find_wpilib_toolchain() -> PathBuf {
         return path;
     };
     let default_location = if cfg!(windows) {
-        PathBuf::from("C:/Users/Public/wpilib/2023")
+        PathBuf::from(format!("C:/Users/Public/wpilib/{WPILIB_YEAR}"))
     } else if cfg!(unix) {
         let Some(home) = dirs::home_dir() else {
             panic!("Could not get default toolchain location because home directory could not be determined. Try setting the WPILIB_TOOLCHAIN environment variable.");
         };
-        home.join("wpilib").join("2023")
+        home.join("wpilib").join(WPILIB_YEAR)
     } else {
         panic!("Your OS does not have a default WPILib toolchain location. Try setting the WPILIB_TOOLCHAIN environment variable.")
     };

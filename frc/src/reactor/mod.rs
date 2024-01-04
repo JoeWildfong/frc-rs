@@ -83,6 +83,13 @@ impl IrqReactor {
             .replace(waker, irq_number as usize)
     }
 }
+
+impl Default for IrqReactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Drop for IrqReactor {
     fn drop(&mut self) {
         self.shutdown.store(true, Ordering::Relaxed);

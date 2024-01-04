@@ -14,29 +14,29 @@ impl WpilibArtifactInfo {
         match target {
             "aarch64-unknown-linux-gnu" => Self {
                 platform_name: "linuxarm64",
-                object_path_in_zip: &Path::new("linux/arm64"),
+                object_path_in_zip: Path::new("linux/arm64"),
             },
             #[cfg(sim)]
             "arm-unknown-linux-gnueabi" => Self {
                 platform_name: "linuxarm32",
-                object_path_in_zip: &Path::new("linux/arm32"),
+                object_path_in_zip: Path::new("linux/arm32"),
             },
             #[cfg(not(sim))]
             "arm-unknown-linux-gnueabi" => Self {
                 platform_name: "linuxathena",
-                object_path_in_zip: &Path::new("linux/athena"),
+                object_path_in_zip: Path::new("linux/athena"),
             },
             "x86_64-unknown-linux-gnu" => Self {
                 platform_name: "linuxx86-64",
-                object_path_in_zip: &Path::new("linux/x86-64"),
+                object_path_in_zip: Path::new("linux/x86-64"),
             },
             "aarch64-apple-darwin" | "x86_64-apple-darwin" => Self {
                 platform_name: "osxuniversal",
-                object_path_in_zip: &Path::new("osx/universal"),
+                object_path_in_zip: Path::new("osx/universal"),
             },
             "x86_64-pc-windows-msvc" => Self {
                 platform_name: "windowsx86-64",
-                object_path_in_zip: &Path::new("windows/x86-64"),
+                object_path_in_zip: Path::new("windows/x86-64"),
             },
             _ => panic!("unsupported OS/architecture"),
         }
@@ -66,7 +66,7 @@ fn clean_objects_in_dir(dir: impl AsRef<Path>) -> Result<(), Box<dyn std::error:
                 continue;
             }
             let new_name = &file_name[..index + ".so".len()];
-            std::fs::rename(&file_path, file_path.with_file_name(&new_name))?;
+            std::fs::rename(file_path, file_path.with_file_name(new_name))?;
         }
     }
     Ok(())

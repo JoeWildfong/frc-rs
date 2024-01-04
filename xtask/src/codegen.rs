@@ -8,9 +8,9 @@ mod libraries;
 mod wpihal_ffi;
 mod wpiutil_ffi;
 
-const WPILIB_YEAR: &'static str = "2023";
-const WPILIB_VERSION: &'static str = "2023.4.3";
-const NI_VERSION: &'static str = "2023.3.0";
+const WPILIB_YEAR: &str = "2023";
+const WPILIB_VERSION: &str = "2023.4.3";
+const NI_VERSION: &str = "2023.3.0";
 
 pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error>> {
     std::fs::remove_dir_all(header_folder()).unwrap_or_else(|err| match err.kind() {

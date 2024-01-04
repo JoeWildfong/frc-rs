@@ -137,7 +137,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
         std::thread::spawn(move || {
             let shutdown = shutdown2;
             let event_handle = unsafe {
-                let event_handle = wpiutil_ffi::WPI_CreateEvent(0.into(), 0.into());
+                let event_handle = wpiutil_ffi::WPI_CreateEvent(0, 0);
                 wpihal_ffi::HAL_ProvideNewDataEventHandle(event_handle);
                 event_handle
             };
@@ -242,6 +242,12 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
             povs: ControllerPOVs::from(povs),
             buttons: ControllerButtons::from(buttons),
         })
+    }
+}
+
+impl<const CONTROLLERS: usize> Default for DriverStation<CONTROLLERS> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

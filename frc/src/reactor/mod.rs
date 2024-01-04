@@ -1,12 +1,18 @@
 //! Very unfinished reactor to wake async tasks upon external conditions
 //! (e.g. an FPGA interrupt fired, we got a new packet from the driver station, etc.)
 
-use std::{task::Waker, sync::{atomic::{AtomicBool, Ordering}, Mutex, Arc}};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+    task::Waker,
+};
 
 use self::waker_array::WakerArray;
 
-mod waker_array;
 pub mod driver_station;
+mod waker_array;
 
 // HOW INTERRUPTS WORK
 // call HAL_InitializeInterrupts to get a HAL_InterruptHandle
@@ -59,19 +65,22 @@ impl IrqReactor {
                 }
             }
         });
-        
-        Self {
-            wakers,
-            shutdown
-        }
+
+        Self { wakers, shutdown }
     }
 
     pub fn register(&self, irq_number: Irq, waker: Waker) -> Result<(), Waker> {
-        self.wakers.lock().unwrap().register(waker, irq_number as usize)
+        self.wakers
+            .lock()
+            .unwrap()
+            .register(waker, irq_number as usize)
     }
 
     pub fn replace(&self, irq_number: Irq, waker: Waker) -> Option<Waker> {
-        self.wakers.lock().unwrap().replace(waker, irq_number as usize)
+        self.wakers
+            .lock()
+            .unwrap()
+            .replace(waker, irq_number as usize)
     }
 }
 impl Drop for IrqReactor {

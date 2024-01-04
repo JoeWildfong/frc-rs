@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use super::{PneumaticsController, Compressor};
+use super::{Compressor, PneumaticsController};
 
 pub struct RevPh {
     handle: wpihal_ffi::HAL_REVPHHandle,
@@ -17,9 +17,7 @@ impl RevPh {
                 )
             })
         };
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn as_parts(&mut self) -> (RevCompressor<'_>, RevPneumatics<'_>) {
@@ -42,7 +40,7 @@ impl RevPh {
                 channel13: RevChannel13 { ph: self },
                 channel14: RevChannel14 { ph: self },
                 channel15: RevChannel15 { ph: self },
-            }
+            },
         )
     }
 }
@@ -50,7 +48,9 @@ impl RevPh {
 impl PneumaticsController for RevPh {
     fn get_solenoids(&self) -> u32 {
         let solenoids = unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| wpihal_ffi::HAL_GetREVPHSolenoids(self.handle, status))
+            wpihal_ffi::panic_on_hal_error(|status| {
+                wpihal_ffi::HAL_GetREVPHSolenoids(self.handle, status)
+            })
         };
         solenoids as u32
     }
@@ -58,12 +58,7 @@ impl PneumaticsController for RevPh {
     fn set_solenoids(&self, mask: u32, values: u32) {
         unsafe {
             wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_SetREVPHSolenoids(
-                    self.handle,
-                    mask as i32,
-                    values as i32,
-                    status,
-                );
+                wpihal_ffi::HAL_SetREVPHSolenoids(self.handle, mask as i32, values as i32, status);
             });
         };
     }
@@ -117,7 +112,7 @@ macro_rules! rev_channel {
                 self.ph
             }
         }
-    }
+    };
 }
 
 rev_channel!(RevChannel0, 0);

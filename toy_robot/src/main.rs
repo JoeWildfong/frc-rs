@@ -1,11 +1,22 @@
 use std::time::Duration;
 
-use frc::pneumatics::{ctre::{CtrePcm, CtrePneumatics}, DoubleSolenoid, Solenoid, DoubleSolenoidState};
+use frc::pneumatics::{
+    ctre::{CtrePcm, CtrePneumatics},
+    DoubleSolenoid, DoubleSolenoidState, Solenoid,
+};
 
 #[tokio::main]
 async fn main() {
     let mut pneumatics = CtrePcm::default();
-    let (_compressor, CtrePneumatics { channel0, channel1, channel5, .. }) = pneumatics.as_parts();
+    let (
+        _compressor,
+        CtrePneumatics {
+            channel0,
+            channel1,
+            channel5,
+            ..
+        },
+    ) = pneumatics.as_parts();
 
     let mut double_solenoid = DoubleSolenoid::new(channel0, channel1);
     let mut single_solenoid = Solenoid::new(channel5);

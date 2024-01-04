@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use super::{PneumaticsController, Compressor};
+use super::{Compressor, PneumaticsController};
 
 pub struct CtrePcm {
     handle: wpihal_ffi::HAL_CTREPCMHandle,
@@ -17,9 +17,7 @@ impl CtrePcm {
                 )
             })
         };
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn as_parts(&mut self) -> (CtreCompressor<'_>, CtrePneumatics<'_>) {
@@ -34,7 +32,7 @@ impl CtrePcm {
                 channel5: CtreChannel5 { pcm: self },
                 channel6: CtreChannel6 { pcm: self },
                 channel7: CtreChannel7 { pcm: self },
-            }
+            },
         )
     }
 }
@@ -111,7 +109,7 @@ macro_rules! ctre_channel {
                 self.pcm
             }
         }
-    }
+    };
 }
 
 ctre_channel!(CtreChannel0, 0);

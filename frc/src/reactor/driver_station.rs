@@ -164,7 +164,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
                     };
                 }
             }
-            unsafe { 
+            unsafe {
                 wpihal_ffi::HAL_RemoveNewDataEventHandle(event_handle);
                 wpiutil_ffi::WPI_DestroyEvent(event_handle);
             }

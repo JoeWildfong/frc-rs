@@ -4,7 +4,7 @@
 #![allow(clippy::all)]
 #![allow(clippy::pedantic)]
 
-use std::{mem::MaybeUninit, ffi::CStr};
+use std::{ffi::CStr, mem::MaybeUninit};
 include!("bindings.rs");
 
 pub unsafe fn panic_on_hal_error<F, T>(f: F) -> T

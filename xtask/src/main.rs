@@ -1,4 +1,8 @@
-use std::{env, error::Error, path::{PathBuf, Path}};
+use std::{
+    env,
+    error::Error,
+    path::{Path, PathBuf},
+};
 
 mod codegen;
 
@@ -18,7 +22,6 @@ Tasks:
 "
     );
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let task = env::args().nth(1);

@@ -9,7 +9,9 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
 
     let wrappers_folder = Path::new(file!()).parent().unwrap().join("wrappers");
     let bindings = bindgen::Builder::default()
-        .clang_args(super::clang_args_for_toolchain(&super::find_wpilib_toolchain()))
+        .clang_args(super::clang_args_for_toolchain(
+            &super::find_wpilib_toolchain(),
+        ))
         .clang_args([
             format!("-isystem{}", hal_header_folder.display()),
             format!("-isystem{}", chipobject_header_folder.display()),
@@ -22,6 +24,8 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .allowlist_var("HAL_.*")
         .generate()
         .expect("failed to generate bindings");
-    bindings.write_to_file(crate::project_root().join("wpihal_ffi/src/bindings.rs")).expect("failed to write to file");
+    bindings
+        .write_to_file(crate::project_root().join("wpihal_ffi/src/bindings.rs"))
+        .expect("failed to write to file");
     Ok(())
 }

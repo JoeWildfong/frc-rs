@@ -26,7 +26,7 @@ impl<const T: usize> WakerArray<T> {
 
     pub fn new() -> Self {
         Self {
-            wakers: std::array::from_fn(|_| None)
+            wakers: std::array::from_fn(|_| None),
         }
     }
 }

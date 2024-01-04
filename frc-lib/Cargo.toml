@@ -6,4 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wpilib_hal_ffi = { version = "0.0.0", path = "../wpilib_hal_ffi" }
+tokio = { version = "1.35.1", features = ["sync"] }
+wpilib_hal_ffi = { path = "../wpilib_hal_ffi" }
+wpilib_wpiutil_ffi = { path = "../wpilib_wpiutil_ffi" }

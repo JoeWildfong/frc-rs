@@ -6,6 +6,7 @@ use std::{task::Waker, sync::{atomic::{AtomicBool, Ordering}, Mutex, Arc}};
 use self::waker_array::WakerArray;
 
 mod waker_array;
+pub mod driver_station;
 
 // HOW INTERRUPTS WORK
 // call HAL_InitializeInterrupts to get a HAL_InterruptHandle

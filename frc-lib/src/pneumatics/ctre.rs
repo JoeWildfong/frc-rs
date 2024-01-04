@@ -3,7 +3,7 @@ use std::ffi::CStr;
 use super::{PneumaticsController, Compressor};
 
 pub struct CtrePcm {
-    pub(self) handle: wpilib_hal_ffi::HAL_CTREPCMHandle,
+    handle: wpilib_hal_ffi::HAL_CTREPCMHandle,
 }
 
 impl CtrePcm {

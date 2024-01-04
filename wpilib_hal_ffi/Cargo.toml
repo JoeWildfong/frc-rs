@@ -9,5 +9,4 @@ edition = "2021"
 wpilib_wpiutil_ffi = { path = "../wpilib_wpiutil_ffi" }
 
 [build-dependencies]
-ureq = "2.6.2"
-zip = "0.6.4"
+wpilib_artifact_download = { path = "../wpilib_artifact_download" }

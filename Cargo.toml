@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "wpilib_artifact_download",
     "wpilib_hal_ffi",
     "wpilib_wpiutil_ffi",
     "xtask",

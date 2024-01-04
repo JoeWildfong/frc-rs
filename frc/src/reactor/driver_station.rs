@@ -3,8 +3,9 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+use std::time::Duration;
 
-use tokio::sync::watch;
+use tokio::sync::Notify;
 
 #[derive(PartialEq, Eq, Clone, Copy, Default)]
 pub enum RobotMode {
@@ -114,85 +115,75 @@ impl ControllerState {
     }
 }
 
-fn make_channels<const N: usize, T: Default>() -> ([watch::Sender<T>; N], [watch::Receiver<T>; N]) {
-    let channels: [_; N] = std::array::from_fn(|_| watch::channel(T::default()));
-    let (senders, receivers): (Vec<_>, Vec<_>) = channels.into_iter().unzip();
-    let (Ok(senders), Ok(receivers)) = (senders.try_into(), receivers.try_into()) else { unreachable!() };
-    (senders, receivers)
-}
-
-pub struct DriverStation<const CONTROLLERS: usize> {
-    robot_state: watch::Receiver<RobotMode>,
-    controllers: [watch::Receiver<Option<ControllerState>>; CONTROLLERS],
+pub struct DriverStation {
+    new_packet: Arc<Notify>,
     shutdown: Arc<AtomicBool>,
 }
 
-impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
+impl DriverStation {
     pub fn new() -> Self {
-        let (event_send, event_recv) = watch::channel(RobotMode::default());
         let shutdown = Arc::new(AtomicBool::new(false));
         let shutdown2 = Arc::clone(&shutdown);
-        let (controller_sends, controller_recvs) =
-            make_channels::<{ CONTROLLERS }, Option<ControllerState>>();
+        let new_packet = Arc::new(Notify::new());
+        let new_packet2 = Arc::clone(&new_packet);
         std::thread::spawn(move || {
             let shutdown = shutdown2;
-            let event_handle = unsafe {
-                let event_handle = wpiutil_ffi::WPI_CreateEvent(0, 0);
-                wpihal_ffi::HAL_ProvideNewDataEventHandle(event_handle);
-                event_handle
-            };
-            'outer: while !shutdown.load(Ordering::Relaxed) {
-                unsafe {
-                    wpiutil_ffi::WPI_WaitForObjectTimeout(event_handle, 1.0, std::ptr::null_mut());
-                };
-
-                let new_state = Self::get_state();
-                if new_state != *event_send.borrow() {
-                    let send_result = event_send.send(new_state);
-                    if send_result.is_err() {
-                        break;
-                    }
+            let new_packet = new_packet2;
+            let event_handle = DsEvent::new(false, false);
+            while !shutdown.load(Ordering::Relaxed) {
+                if event_handle.wait_timeout(Duration::from_secs(1)).is_ok() {
+                    new_packet.notify_waiters();
                 }
-
-                for (i, sender) in controller_sends.iter().enumerate() {
-                    let new_controller_state = Self::get_controller(i32::try_from(i).unwrap());
-                    if new_controller_state == *sender.borrow() {
-                        continue;
-                    }
-                    let Ok(_) = sender.send(new_controller_state) else {
-                        break 'outer;
-                    };
-                }
-            }
-            unsafe {
-                wpihal_ffi::HAL_RemoveNewDataEventHandle(event_handle);
-                wpiutil_ffi::WPI_DestroyEvent(event_handle);
             }
         });
         Self {
-            robot_state: event_recv,
-            controllers: controller_recvs,
+            new_packet,
             shutdown,
         }
     }
 
-    /// Returns a watch channel receiver to read the robot's state (Disabled, Autonomous, etc.).
-    /// See the `RobotState` enum for possible states.
-    pub fn get_state_receiver(&self) -> watch::Receiver<RobotMode> {
-        self.robot_state.clone()
+    /// Waits until a new packet is received from the Driver Station.
+    /// This signifies that updated Driver Station data, such as robot and controller state, is available.
+    pub async fn wait_for_packet(&self) {
+        self.new_packet.notified().await
     }
 
-    /// Returns a watch channel receiver to read the state of a controller on a given port.
-    /// The channel will yield None when no controller is plugged into the port.
-    /// Will panic if a port is requested that is not being listened on.
-    /// TODO: can we make this a compile error instead?
-    pub fn get_controller_receiver<const PORT: u8>(
-        &self,
-    ) -> watch::Receiver<Option<ControllerState>> {
-        self.controllers[PORT as usize].clone()
+    /// Gets the most recently reported state of the controller on a given port, if any is plugged in.
+    /// Returns None if no controller exists on the given port.
+    pub fn get_controller_state(&self, port: u8) -> Option<ControllerState> {
+        let axes = unsafe {
+            let mut axes = MaybeUninit::uninit();
+            let result = wpihal_ffi::HAL_GetJoystickAxes(i32::from(port), axes.as_mut_ptr());
+            if result != 0 {
+                return None;
+            }
+            axes.assume_init()
+        };
+        let povs = unsafe {
+            let mut povs = MaybeUninit::uninit();
+            let result = wpihal_ffi::HAL_GetJoystickPOVs(i32::from(port), povs.as_mut_ptr());
+            if result != 0 {
+                return None;
+            }
+            povs.assume_init()
+        };
+        let buttons = unsafe {
+            let mut buttons = MaybeUninit::uninit();
+            let result = wpihal_ffi::HAL_GetJoystickButtons(i32::from(port), buttons.as_mut_ptr());
+            if result != 0 {
+                return None;
+            }
+            buttons.assume_init()
+        };
+        Some(ControllerState {
+            axes: ControllerAxes::from(axes),
+            povs: ControllerPOVs::from(povs),
+            buttons: ControllerButtons::from(buttons),
+        })
     }
 
-    fn get_state() -> RobotMode {
+    /// Gets the most recently reported robot mode.
+    pub fn get_robot_mode() -> RobotMode {
         // SAFETY: safe because HAL_GetControlWord is guaranteed to initialize control_word
         let control_word = unsafe {
             let mut control_word = MaybeUninit::uninit();
@@ -211,48 +202,57 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
             RobotMode::Disabled
         }
     }
-
-    fn get_controller(n: i32) -> Option<ControllerState> {
-        let axes = unsafe {
-            let mut axes = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickAxes(n, axes.as_mut_ptr());
-            if result != 0 {
-                return None;
-            }
-            axes.assume_init()
-        };
-        let povs = unsafe {
-            let mut povs = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickPOVs(n, povs.as_mut_ptr());
-            if result != 0 {
-                return None;
-            }
-            povs.assume_init()
-        };
-        let buttons = unsafe {
-            let mut buttons = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickButtons(n, buttons.as_mut_ptr());
-            if result != 0 {
-                return None;
-            }
-            buttons.assume_init()
-        };
-        Some(ControllerState {
-            axes: ControllerAxes::from(axes),
-            povs: ControllerPOVs::from(povs),
-            buttons: ControllerButtons::from(buttons),
-        })
-    }
 }
 
-impl<const CONTROLLERS: usize> Default for DriverStation<CONTROLLERS> {
+impl Default for DriverStation {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const CONTROLLERS: usize> Drop for DriverStation<CONTROLLERS> {
+impl Drop for DriverStation {
     fn drop(&mut self) {
         self.shutdown.store(true, Ordering::Relaxed);
+    }
+}
+
+struct DsEvent {
+    handle: u32,
+}
+
+impl DsEvent {
+    fn new(manual_reset: bool, initial_state: bool) -> Self {
+        let handle = unsafe {
+            wpiutil_ffi::WPI_CreateEvent(
+                if manual_reset { 1 } else { 0 },
+                if initial_state { 1 } else { 0 },
+            )
+        };
+        unsafe {
+            wpihal_ffi::HAL_ProvideNewDataEventHandle(handle);
+        }
+        Self { handle }
+    }
+
+    fn wait_timeout(&self, timeout: Duration) -> Result<(), ()> {
+        unsafe {
+            let mut timed_out = MaybeUninit::uninit();
+            wpiutil_ffi::WPI_WaitForObjectTimeout(
+                self.handle,
+                timeout.as_secs_f64(),
+                timed_out.as_mut_ptr(),
+            );
+            if timed_out.assume_init() == 0 {
+                Ok(())
+            } else {
+                Err(())
+            }
+        }
+    }
+}
+
+impl Drop for DsEvent {
+    fn drop(&mut self) {
+        unsafe { wpiutil_ffi::WPI_DestroyEvent(self.handle) }
     }
 }

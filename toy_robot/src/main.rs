@@ -1,8 +1,9 @@
-use std::time::Duration;
-
-use frc::pneumatics::{
-    ctre::{CtrePcm, CtrePneumatics},
-    DoubleSolenoid, DoubleSolenoidState, Solenoid,
+use frc::{
+    pneumatics::{
+        ctre::{CtrePcm, CtrePneumatics},
+        DoubleSolenoid, DoubleSolenoidState, Solenoid,
+    },
+    reactor::driver_station::DriverStation,
 };
 
 #[tokio::main]
@@ -21,18 +22,19 @@ async fn main() {
     let mut double_solenoid = DoubleSolenoid::new(channel0, channel1);
     let mut single_solenoid = Solenoid::new(channel5);
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    let ds = DriverStation::new();
 
-    double_solenoid.set(DoubleSolenoidState::Backward);
-    single_solenoid.set(false);
-
-    tokio::time::sleep(Duration::from_secs(2)).await;
-
-    double_solenoid.set(DoubleSolenoidState::Forward);
-    single_solenoid.set(true);
-
-    tokio::time::sleep(Duration::from_secs(2)).await;
-
-    double_solenoid.set(DoubleSolenoidState::Off);
-    single_solenoid.set(false);
+    loop {
+        if let Some(controller_state) = ds.get_controller_state(0) {
+            let button0 = controller_state.button(0).expect("no button 0?");
+            double_solenoid.set(if button0 {
+                DoubleSolenoidState::Forward
+            } else {
+                DoubleSolenoidState::Backward
+            });
+            let button1 = controller_state.button(1).expect("no button 1?");
+            single_solenoid.set(button1);
+        }
+        ds.wait_for_packet().await;
+    }
 }

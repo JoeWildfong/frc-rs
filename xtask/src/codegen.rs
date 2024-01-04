@@ -1,7 +1,7 @@
 use std::{error::Error, path::{Path, PathBuf}, io::{Cursor, Read}};
 
-mod wpilib_hal_ffi;
-mod wpilib_wpiutil_ffi;
+mod wpihal_ffi;
+mod wpiutil_ffi;
 mod libraries;
 
 const WPILIB_YEAR: &'static str = "2023";
@@ -17,14 +17,14 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
     match crate_name {
         Some(t) => {
             match t.as_str() {
-                "wpilib_hal_ffi" => wpilib_hal_ffi::generate_bindings()?,
-                "wpilib_wpiutil_ffi" => wpilib_wpiutil_ffi::generate_bindings()?,
+                "wpihal_ffi" => wpihal_ffi::generate_bindings()?,
+                "wpiutil_ffi" => wpiutil_ffi::generate_bindings()?,
                 invalid => return Err(format!("Invalid crate name: {invalid}").into()),
             }
         },
         None => {
-            wpilib_hal_ffi::generate_bindings()?;
-            wpilib_wpiutil_ffi::generate_bindings()?;
+            wpihal_ffi::generate_bindings()?;
+            wpiutil_ffi::generate_bindings()?;
         },
     }
     Ok(())

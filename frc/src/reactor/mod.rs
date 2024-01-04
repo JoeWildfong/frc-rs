@@ -41,14 +41,14 @@ impl IrqReactor {
 
         std::thread::spawn(move || {
             let handle = unsafe {
-                wpilib_hal_ffi::panic_on_hal_error(|status| {
-                    wpilib_hal_ffi::HAL_InitializeInterrupts(status)
+                wpihal_ffi::panic_on_hal_error(|status| {
+                    wpihal_ffi::HAL_InitializeInterrupts(status)
                 })
             };
             while !shutdown_inner.load(Ordering::Relaxed) {
                 let mut irq = unsafe {
-                    wpilib_hal_ffi::panic_on_hal_error(|status| {
-                        wpilib_hal_ffi::HAL_WaitForMultipleInterrupts(handle, i64::MAX, 0.5, 0, status)
+                    wpihal_ffi::panic_on_hal_error(|status| {
+                        wpihal_ffi::HAL_WaitForMultipleInterrupts(handle, i64::MAX, 0.5, 0, status)
                     })
                 };
                 let mut wakers_guard = wakers_inner.lock().unwrap();

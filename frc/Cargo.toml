@@ -1,10 +1,11 @@
 [package]
-name = "toy-robot"
+name = "frc"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-frc-lib = { path = "../frc-lib" }
-tokio = { version = "1.35.0", features = ["full"] }
+tokio = { version = "1.35.1", features = ["sync"] }
+wpihal_ffi = { path = "../wpihal_ffi" }
+wpiutil_ffi = { path = "../wpiutil_ffi" }

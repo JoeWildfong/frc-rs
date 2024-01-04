@@ -31,8 +31,8 @@ impl ControllerAxes {
     }
 }
 
-impl From<wpilib_hal_ffi::HAL_JoystickAxes> for ControllerAxes {
-    fn from(value: wpilib_hal_ffi::HAL_JoystickAxes) -> Self {
+impl From<wpihal_ffi::HAL_JoystickAxes> for ControllerAxes {
+    fn from(value: wpihal_ffi::HAL_JoystickAxes) -> Self {
         Self {
             count: value.count,
             axes: value.axes,
@@ -56,8 +56,8 @@ impl ControllerPOVs {
     }
 }
 
-impl From<wpilib_hal_ffi::HAL_JoystickPOVs> for ControllerPOVs {
-    fn from(value: wpilib_hal_ffi::HAL_JoystickPOVs) -> Self {
+impl From<wpihal_ffi::HAL_JoystickPOVs> for ControllerPOVs {
+    fn from(value: wpihal_ffi::HAL_JoystickPOVs) -> Self {
         Self {
             count: value.count,
             povs: value.povs,
@@ -81,8 +81,8 @@ impl ControllerButtons {
     }
 }
 
-impl From<wpilib_hal_ffi::HAL_JoystickButtons> for ControllerButtons {
-    fn from(value: wpilib_hal_ffi::HAL_JoystickButtons) -> Self {
+impl From<wpihal_ffi::HAL_JoystickButtons> for ControllerButtons {
+    fn from(value: wpihal_ffi::HAL_JoystickButtons) -> Self {
         Self {
             count: value.count,
             buttons: value.buttons,
@@ -137,13 +137,13 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
         std::thread::spawn(move || {
             let shutdown = shutdown2;
             let event_handle = unsafe {
-                let event_handle = wpilib_wpiutil_ffi::WPI_CreateEvent(0.into(), 0.into());
-                wpilib_hal_ffi::HAL_ProvideNewDataEventHandle(event_handle);
+                let event_handle = wpiutil_ffi::WPI_CreateEvent(0.into(), 0.into());
+                wpihal_ffi::HAL_ProvideNewDataEventHandle(event_handle);
                 event_handle
             };
             'outer: while !shutdown.load(Ordering::Relaxed) {
                 unsafe {
-                    wpilib_wpiutil_ffi::WPI_WaitForObjectTimeout(event_handle, 1.0, std::ptr::null_mut());
+                    wpiutil_ffi::WPI_WaitForObjectTimeout(event_handle, 1.0, std::ptr::null_mut());
                 };
 
                 let new_state = Self::get_state();
@@ -165,8 +165,8 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
                 }
             }
             unsafe { 
-                wpilib_hal_ffi::HAL_RemoveNewDataEventHandle(event_handle);
-                wpilib_wpiutil_ffi::WPI_DestroyEvent(event_handle);
+                wpihal_ffi::HAL_RemoveNewDataEventHandle(event_handle);
+                wpiutil_ffi::WPI_DestroyEvent(event_handle);
             }
         });
         Self {
@@ -196,7 +196,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
         // SAFETY: safe because HAL_GetControlWord is guaranteed to initialize control_word
         let control_word = unsafe {
             let mut control_word = MaybeUninit::uninit();
-            wpilib_hal_ffi::HAL_GetControlWord(control_word.as_mut_ptr());
+            wpihal_ffi::HAL_GetControlWord(control_word.as_mut_ptr());
             control_word.assume_init()
         };
         if control_word.enabled() != 0 {
@@ -215,7 +215,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
     fn get_controller(n: i32) -> Option<ControllerState> {
         let axes = unsafe {
             let mut axes = MaybeUninit::uninit();
-            let result = wpilib_hal_ffi::HAL_GetJoystickAxes(n, axes.as_mut_ptr());
+            let result = wpihal_ffi::HAL_GetJoystickAxes(n, axes.as_mut_ptr());
             if result != 0 {
                 return None;
             }
@@ -223,7 +223,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
         };
         let povs = unsafe {
             let mut povs = MaybeUninit::uninit();
-            let result = wpilib_hal_ffi::HAL_GetJoystickPOVs(n, povs.as_mut_ptr());
+            let result = wpihal_ffi::HAL_GetJoystickPOVs(n, povs.as_mut_ptr());
             if result != 0 {
                 return None;
             }
@@ -231,7 +231,7 @@ impl<const CONTROLLERS: usize> DriverStation<CONTROLLERS> {
         };
         let buttons = unsafe {
             let mut buttons = MaybeUninit::uninit();
-            let result = wpilib_hal_ffi::HAL_GetJoystickButtons(n, buttons.as_mut_ptr());
+            let result = wpihal_ffi::HAL_GetJoystickButtons(n, buttons.as_mut_ptr());
             if result != 0 {
                 return None;
             }

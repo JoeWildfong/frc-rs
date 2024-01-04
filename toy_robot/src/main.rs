@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use frc_lib::pneumatics::{ctre::{CtrePcm, CtrePneumatics}, DoubleSolenoid, Solenoid, DoubleSolenoidState};
+use frc::pneumatics::{ctre::{CtrePcm, CtrePneumatics}, DoubleSolenoid, Solenoid, DoubleSolenoidState};
 
 #[tokio::main]
 async fn main() {

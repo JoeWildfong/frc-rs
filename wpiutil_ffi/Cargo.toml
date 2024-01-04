@@ -1,12 +1,11 @@
 [package]
-name = "wpilib_hal_ffi"
-version = "0.0.0"
+name = "wpiutil_ffi"
+version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wpilib_wpiutil_ffi = { path = "../wpilib_wpiutil_ffi" }
 
 [build-dependencies]
 wpilib_artifact_download = { path = "../wpilib_artifact_download" }

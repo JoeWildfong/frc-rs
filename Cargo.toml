@@ -1,9 +1,9 @@
 [workspace]
 members = [
     "wpilib_artifact_download",
-    "wpilib_hal_ffi",
-    "wpilib_wpiutil_ffi",
+    "wpihal_ffi",
+    "wpiutil_ffi",
     "xtask",
-    "frc-lib",
-    "toy-robot",
+    "frc",
+    "toy_robot",
 ]

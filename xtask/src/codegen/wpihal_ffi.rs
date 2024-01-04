@@ -22,6 +22,6 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .allowlist_var("HAL_.*")
         .generate()
         .expect("failed to generate bindings");
-    bindings.write_to_file(crate::project_root().join("wpilib_hal_ffi/src/bindings.rs")).expect("failed to write to file");
+    bindings.write_to_file(crate::project_root().join("wpihal_ffi/src/bindings.rs")).expect("failed to write to file");
     Ok(())
 }

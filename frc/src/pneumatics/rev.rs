@@ -3,14 +3,14 @@ use std::ffi::CStr;
 use super::{PneumaticsController, Compressor};
 
 pub struct RevPh {
-    handle: wpilib_hal_ffi::HAL_REVPHHandle,
+    handle: wpihal_ffi::HAL_REVPHHandle,
 }
 
 impl RevPh {
     pub fn new(can_id: i32) -> Self {
         let handle = unsafe {
-            wpilib_hal_ffi::panic_on_hal_error(|status| {
-                wpilib_hal_ffi::HAL_InitializeREVPH(
+            wpihal_ffi::panic_on_hal_error(|status| {
+                wpihal_ffi::HAL_InitializeREVPH(
                     can_id,
                     CStr::from_bytes_with_nul(b"\0").unwrap().as_ptr(),
                     status,
@@ -50,15 +50,15 @@ impl RevPh {
 impl PneumaticsController for RevPh {
     fn get_solenoids(&self) -> u32 {
         let solenoids = unsafe {
-            wpilib_hal_ffi::panic_on_hal_error(|status| wpilib_hal_ffi::HAL_GetREVPHSolenoids(self.handle, status))
+            wpihal_ffi::panic_on_hal_error(|status| wpihal_ffi::HAL_GetREVPHSolenoids(self.handle, status))
         };
         solenoids as u32
     }
 
     fn set_solenoids(&self, mask: u32, values: u32) {
         unsafe {
-            wpilib_hal_ffi::panic_on_hal_error(|status| {
-                wpilib_hal_ffi::HAL_SetREVPHSolenoids(
+            wpihal_ffi::panic_on_hal_error(|status| {
+                wpihal_ffi::HAL_SetREVPHSolenoids(
                     self.handle,
                     mask as i32,
                     values as i32,
@@ -77,7 +77,7 @@ impl Default for RevPh {
 
 impl Drop for RevPh {
     fn drop(&mut self) {
-        unsafe { wpilib_hal_ffi::HAL_FreeREVPH(self.handle) }
+        unsafe { wpihal_ffi::HAL_FreeREVPH(self.handle) }
     }
 }
 
@@ -88,16 +88,16 @@ pub struct RevCompressor<'a> {
 impl<'a> Compressor for RevCompressor<'a> {
     fn get_enabled(&self) -> bool {
         unsafe {
-            wpilib_hal_ffi::panic_on_hal_error(|status| {
-                wpilib_hal_ffi::HAL_GetREVPHCompressor(self.ph.handle, status)
+            wpihal_ffi::panic_on_hal_error(|status| {
+                wpihal_ffi::HAL_GetREVPHCompressor(self.ph.handle, status)
             }) != 0
         }
     }
 
     fn get_pressure_switch(&self) -> bool {
         unsafe {
-            wpilib_hal_ffi::panic_on_hal_error(|status| {
-                wpilib_hal_ffi::HAL_GetREVPHPressureSwitch(self.ph.handle, status)
+            wpihal_ffi::panic_on_hal_error(|status| {
+                wpihal_ffi::HAL_GetREVPHPressureSwitch(self.ph.handle, status)
             }) != 0
         }
     }

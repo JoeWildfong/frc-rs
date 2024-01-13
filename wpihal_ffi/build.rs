@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 fn unwrap_all_glob(pattern: &str) -> impl Iterator<Item = PathBuf> {
-    glob::glob(pattern).unwrap().into_iter().map(|path| path.unwrap())
+    glob::glob(pattern).unwrap().map(|path| path.unwrap())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,7 +41,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
         println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
     }
-    
-    println!("cargo:include={}/wpihal/headers", std::env::current_dir()?.display());
+
+    println!(
+        "cargo:include={}/wpihal/headers",
+        std::env::current_dir()?.display()
+    );
     Ok(())
 }

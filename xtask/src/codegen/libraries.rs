@@ -13,8 +13,20 @@ pub fn get_wpihal() -> Result<PathBuf, &'static str> {
         std::fs::create_dir_all(&headers_folder).unwrap();
         let base_url = super::frc_maven_url();
         use super::WPILIB_VERSION;
-        super::download_and_extract_zip(&format!("{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip"), &headers_folder).unwrap();
-        super::download_and_extract_zip(&format!("{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-sources.zip"), &sources_folder).unwrap();
+        super::download_and_extract_zip(
+            &format!(
+                "{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip"
+            ),
+            &headers_folder,
+        )
+        .unwrap();
+        super::download_and_extract_zip(
+            &format!(
+                "{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-sources.zip"
+            ),
+            &sources_folder,
+        )
+        .unwrap();
         std::fs::remove_dir_all(sources_folder.join("jni")).ok();
     });
 

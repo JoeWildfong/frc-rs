@@ -1,16 +1,15 @@
-use std::{
-    env,
-    error::Error,
-    path::Path,
-};
+use std::{env, error::Error, path::Path};
 
 mod codegen;
 
 pub fn project_root() -> &'static Path {
     Path::new(file!())
-        .parent().unwrap()
-        .parent().unwrap()
-        .parent().unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
 }
 
 fn print_help() {

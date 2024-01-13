@@ -1,7 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut build = cc::Build::new();
     build
-        .files(glob::glob("wpiutil/sources/**/*.cpp")?.into_iter().map(|a| a.unwrap()))
+        .files(glob::glob("wpiutil/sources/**/*.cpp")?.map(|a| a.unwrap()))
         .cpp(true)
         .flag("-std=c++20")
         .flag("-w") // disable warnings
@@ -12,6 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     build.compile("wpiutil");
     println!("cargo:rustc-link-lib=wpiutil");
-    println!("cargo:include={}/wpiutil/headers", std::env::current_dir()?.display());
+    println!(
+        "cargo:include={}/wpiutil/headers",
+        std::env::current_dir()?.display()
+    );
     Ok(())
 }

@@ -5,9 +5,9 @@ use std::{
 };
 
 mod libraries;
+mod ni_frc_libs;
 mod wpihal_ffi;
 mod wpiutil_ffi;
-mod ni_frc_libs;
 
 const WPILIB_YEAR: &str = "2024";
 const WPILIB_VERSION: &str = "2024.1.1";
@@ -47,10 +47,10 @@ pub fn download_and_extract_zip(
     output_dir: impl AsRef<Path>,
 ) -> Result<(), Box<dyn Error>> {
     let resp = ureq::get(url).call()?;
-    let length = resp
-        .header("Content-Length")
-        .ok_or("No Content-Length header")?
-        .parse()?;
+    let length = match resp.header("Content-Length") {
+        Some(size) => size.parse::<usize>()?.max(100_000_000),
+        None => 1_000_000,
+    };
     let mut buf = Vec::with_capacity(length);
     resp.into_reader().take(100_000_000).read_to_end(&mut buf)?;
     zip::ZipArchive::new(Cursor::new(buf))?.extract(output_dir)?;
@@ -85,8 +85,10 @@ pub fn find_wpilib_toolchain_root() -> PathBuf {
 }
 
 pub fn find_wpilib_gcc() -> PathBuf {
-    find_wpilib_toolchain_root()
-        .join(format!("roborio-academic/bin/arm-frc{}-linux-gnueabi-gcc", WPILIB_YEAR))
+    find_wpilib_toolchain_root().join(format!(
+        "roborio-academic/bin/arm-frc{}-linux-gnueabi-gcc",
+        WPILIB_YEAR
+    ))
 }
 
 pub fn clang_args_for_toolchain(toolchain_path: &Path) -> impl Iterator<Item = String> {

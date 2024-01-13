@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "wpilib_artifact_download",
     "wpihal_ffi",
     "wpiutil_ffi",
+    "ni_frc_libs",
     "xtask",
     "frc",
     "toy_robot",
 ]
+resolver = "2"

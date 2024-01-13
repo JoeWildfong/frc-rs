@@ -1,45 +1,47 @@
 use std::path::PathBuf;
-use wpilib_artifact_download::{WpilibArtifactInfo, NI_VERSION, WPILIB_VERSION};
+
+fn unwrap_all_glob(pattern: &str) -> impl Iterator<Item = PathBuf> {
+    glob::glob(pattern).unwrap().into_iter().map(|path| path.unwrap())
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let object_dir =
-        PathBuf::from(std::env::var_os("OUT_DIR").expect("OUT_DIR not set")).join("objects");
-    let artifact_info = WpilibArtifactInfo::from_target(std::env::var("TARGET")?.as_str());
-
-    wpilib_artifact_download::download_and_extract_zip(
-        &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-{}.zip", artifact_info.platform_name), 
-        &object_dir
-    )?;
-    println!("cargo:rustc-link-lib=wpiHal");
-    println!("cargo:rustc-link-lib=wpiutil");
-
-    if artifact_info.platform_name == "linuxathena" {
-        wpilib_artifact_download::download_and_extract_zip(
-            &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ni-libraries/visa/{NI_VERSION}/visa-{NI_VERSION}-linuxathena.zip"), 
-            &object_dir
-        )?;
-        println!("cargo:rustc-link-lib=visa");
-        wpilib_artifact_download::download_and_extract_zip(
-            &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ni-libraries/chipobject/{NI_VERSION}/chipobject-{NI_VERSION}-linuxathena.zip"), 
-            &object_dir
-        )?;
-        println!("cargo:rustc-link-lib=RoboRIO_FRC_ChipObject");
-        wpilib_artifact_download::download_and_extract_zip(
-            &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ni-libraries/netcomm/{NI_VERSION}/netcomm-{NI_VERSION}-linuxathena.zip"), 
-            &object_dir
-        )?;
-        println!("cargo:rustc-link-lib=FRC_NetworkCommunication");
-        wpilib_artifact_download::download_and_extract_zip(
-            &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/ni-libraries/runtime/{NI_VERSION}/runtime-{NI_VERSION}-linuxathena.zip"), 
-            &object_dir
-        )?;
-        println!("cargo:rustc-link-lib=fpgalvshim");
-        println!("cargo:rustc-link-lib=embcanshim");
+    let is_roborio = std::env::var("TARGET").unwrap().as_str() == "armv7-unknown-linux-gnueabi";
+    let mut build = cc::Build::new();
+    build
+        .cpp(true)
+        .flag("-std=c++20")
+        .flag("-w") // disable warnings
+        .flag_if_supported("-Wno-psabi")
+        .files(unwrap_all_glob("wpihal/sources/*.cpp"))
+        .files(unwrap_all_glob("wpihal/sources/cpp/**/*.cpp"))
+        .files(unwrap_all_glob("wpihal/sources/handles/**/*.cpp"))
+        .include("wpihal/headers");
+    if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
+        build.include(ni_headers);
     }
-    let link_dir = object_dir
-        .join(artifact_info.object_path_in_zip)
-        .join("shared");
-    println!("cargo:rustc-link-search={}", link_dir.display());
+    if let Some(wpiutil_headers) = std::env::var_os("DEP_WPIUTIL_INCLUDE") {
+        build.include(wpiutil_headers);
+    }
 
+    if is_roborio {
+        build.files(unwrap_all_glob("wpihal/sources/athena/**/*.cpp"));
+    } else {
+        build.files(unwrap_all_glob("wpihal/sources/sim/**/*.cpp"));
+    }
+
+    build.compile("wpihal");
+    println!("cargo:rustc-link-lib=wpihal");
+
+    // relink all dependencies of wpihal
+    println!("cargo:rustc-link-lib=wpiutil");
+    if is_roborio {
+        println!("cargo:rustc-link-lib=visa");
+        println!("cargo:rustc-link-lib=RoboRIO_FRC_ChipObject");
+        println!("cargo:rustc-link-lib=FRC_NetworkCommunication");
+        println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
+        println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
+    }
+    
+    println!("cargo:include={}/wpihal/headers", std::env::current_dir()?.display());
     Ok(())
 }

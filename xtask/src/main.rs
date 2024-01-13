@@ -1,16 +1,16 @@
 use std::{
     env,
     error::Error,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 mod codegen;
 
-pub fn project_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .to_path_buf()
+pub fn project_root() -> &'static Path {
+    Path::new(file!())
+        .parent().unwrap()
+        .parent().unwrap()
+        .parent().unwrap()
 }
 
 fn print_help() {

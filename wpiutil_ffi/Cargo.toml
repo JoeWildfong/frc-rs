@@ -2,10 +2,15 @@
 name = "wpiutil_ffi"
 version = "0.1.0"
 edition = "2021"
+links = "wpiutil"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 
+[target.armv7-unknown-linux-gnueabi.dependencies]
+ni_frc_libs = { path = "../ni_frc_libs" }
+
 [build-dependencies]
-wpilib_artifact_download = { path = "../wpilib_artifact_download" }
+cc = { version = "1.0.83", features = ["parallel"] }
+glob = "0.3.1"

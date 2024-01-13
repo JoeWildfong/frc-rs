@@ -5,6 +5,8 @@
 #![allow(clippy::pedantic)]
 
 use std::{ffi::CStr, mem::MaybeUninit};
+pub use wpiutil_ffi;
+
 include!("bindings.rs");
 
 pub unsafe fn panic_on_hal_error<F, T>(f: F) -> T

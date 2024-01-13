@@ -3,15 +3,15 @@ use std::error::Error;
 use super::libraries;
 
 pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
-    let wpiutil_header_folder = libraries::get_wpilib_wpiutil();
+    let headers_folder = libraries::get_wpiutil()?;
 
     let bindings = bindgen::Builder::default()
         .clang_args(super::clang_args_for_toolchain(
-            &super::find_wpilib_toolchain(),
+            &super::find_wpilib_toolchain_root(),
         ))
-        .clang_args([format!("-isystem{}", wpiutil_header_folder.display())])
+        .clang_args([format!("-isystem{}", headers_folder.join("wpiutil/headers").display())])
         .header(
-            wpiutil_header_folder
+            headers_folder
                 .join("wpi/Synchronization.h")
                 .to_string_lossy(),
         )

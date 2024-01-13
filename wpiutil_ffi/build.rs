@@ -1,21 +1,17 @@
-use std::path::PathBuf;
-use wpilib_artifact_download::{WpilibArtifactInfo, WPILIB_VERSION};
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let object_dir =
-        PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR not set")).join("objects");
-    let artifact_info = WpilibArtifactInfo::from_target(std::env::var("TARGET")?.as_str());
-
-    wpilib_artifact_download::download_and_extract_zip(
-        &format!("https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-{}.zip", artifact_info.platform_name), 
-        &object_dir
-    )?;
+    let mut build = cc::Build::new();
+    build
+        .files(glob::glob("wpiutil/sources/**/*.cpp")?.into_iter().map(|a| a.unwrap()))
+        .cpp(true)
+        .flag("-std=c++20")
+        .flag("-w") // disable warnings
+        .flag_if_supported("-Wno-psabi")
+        .include("wpiutil/headers");
+    if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
+        build.include(ni_headers);
+    }
+    build.compile("wpiutil");
     println!("cargo:rustc-link-lib=wpiutil");
-
-    let link_dir = object_dir
-        .join(artifact_info.object_path_in_zip)
-        .join("shared");
-    println!("cargo:rustc-link-search={}", link_dir.display());
-
+    println!("cargo:include={}/wpiutil/headers", std::env::current_dir()?.display());
     Ok(())
 }

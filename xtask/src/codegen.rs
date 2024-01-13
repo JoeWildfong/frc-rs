@@ -7,26 +7,28 @@ use std::{
 mod libraries;
 mod wpihal_ffi;
 mod wpiutil_ffi;
+mod ni_frc_libs;
 
-const WPILIB_YEAR: &str = "2023";
-const WPILIB_VERSION: &str = "2023.4.3";
-const NI_VERSION: &str = "2023.3.0";
+const WPILIB_YEAR: &str = "2024";
+const WPILIB_VERSION: &str = "2024.1.1";
 
 pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error>> {
     std::fs::remove_dir_all(header_folder()).unwrap_or_else(|err| match err.kind() {
         std::io::ErrorKind::NotFound => {}
         _ => panic!("failed to remove headers folder"),
     });
-    std::fs::create_dir(header_folder()).expect("failed to create headers folder");
+    std::fs::create_dir_all(header_folder()).expect("failed to create headers folder");
     match crate_name {
         Some(t) => match t.as_str() {
             "wpihal_ffi" => wpihal_ffi::generate_bindings()?,
             "wpiutil_ffi" => wpiutil_ffi::generate_bindings()?,
+            "ni_frc_libs" => ni_frc_libs::generate_bindings()?,
             invalid => return Err(format!("Invalid crate name: {invalid}").into()),
         },
         None => {
             wpihal_ffi::generate_bindings()?;
             wpiutil_ffi::generate_bindings()?;
+            ni_frc_libs::generate_bindings()?;
         }
     }
     Ok(())
@@ -55,7 +57,7 @@ pub fn download_and_extract_zip(
     Ok(())
 }
 
-pub fn find_wpilib_toolchain() -> PathBuf {
+pub fn find_wpilib_toolchain_root() -> PathBuf {
     if let Some(path) = std::env::var_os("WPILIB_TOOLCHAIN").map(PathBuf::from) {
         assert!(
             path.exists(),
@@ -82,6 +84,11 @@ pub fn find_wpilib_toolchain() -> PathBuf {
     default_location
 }
 
+pub fn find_wpilib_gcc() -> PathBuf {
+    find_wpilib_toolchain_root()
+        .join(format!("roborio-academic/bin/arm-frc{}-linux-gnueabi-gcc", WPILIB_YEAR))
+}
+
 pub fn clang_args_for_toolchain(toolchain_path: &Path) -> impl Iterator<Item = String> {
     let sysroot_path = toolchain_path.join(PathBuf::from(
         "roborio-academic/arm-nilrt-linux-gnueabi/sysroot",
@@ -96,18 +103,4 @@ pub fn clang_args_for_toolchain(toolchain_path: &Path) -> impl Iterator<Item = S
         "-iwithsysroot/usr/include".to_owned(),
     ]
     .into_iter()
-}
-
-#[allow(dead_code)]
-pub fn wrap_all_headers(dir: impl AsRef<Path>) -> String {
-    walkdir::WalkDir::new(dir)
-        .into_iter()
-        .filter_entry(|e| e.file_name().to_str() != Some("cpp"))
-        .filter_map(Result::ok)
-        .filter(|entry| {
-            entry.file_type().is_file() && entry.file_name().to_string_lossy().ends_with(".h")
-        })
-        .map(|file| format!("#include \"{}\"", file.into_path().to_string_lossy()))
-        .collect::<Vec<_>>()
-        .join("\n")
 }

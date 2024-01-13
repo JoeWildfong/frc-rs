@@ -1,43 +1,48 @@
 use std::{path::PathBuf, sync::Once};
 
-static GOT_WPILIB_HAL: Once = Once::new();
-static GOT_NI_CHIPOBJECT: Once = Once::new();
-static GOT_WPILIB_WPIUTIL: Once = Once::new();
+static GOT_WPIHAL: Once = Once::new();
+static GOT_WPIUTIL: Once = Once::new();
 
-pub fn get_wpilib_hal() -> PathBuf {
-    use super::WPILIB_VERSION;
-    let base_url = super::frc_maven_url();
-    let hal_header_url =
-        format!("{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip");
-    let hal_header_folder = super::header_folder().join("hal");
-    GOT_WPILIB_HAL.call_once(|| {
-        super::download_and_extract_zip(&hal_header_url, &hal_header_folder).unwrap();
+pub fn get_wpihal() -> Result<PathBuf, &'static str> {
+    let wpihal_folder = crate::project_root().join("wpihal_ffi");
+    let sources_folder = wpihal_folder.join("wpihal/sources");
+    let headers_folder = wpihal_folder.join("wpihal/headers");
+
+    GOT_WPIHAL.call_once(|| {
+        std::fs::create_dir_all(&sources_folder).unwrap();
+        std::fs::create_dir_all(&headers_folder).unwrap();
+        let base_url = super::frc_maven_url();
+        use super::WPILIB_VERSION;
+        super::download_and_extract_zip(&format!("{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip"), &headers_folder).unwrap();
+        super::download_and_extract_zip(&format!("{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-sources.zip"), &sources_folder).unwrap();
+        std::fs::remove_dir_all(sources_folder.join("jni")).ok();
     });
-    hal_header_folder
+
+    if GOT_WPIHAL.is_completed() {
+        Ok(headers_folder)
+    } else {
+        Err("failed to get wpihal")
+    }
 }
 
-pub fn get_ni_chipobject() -> PathBuf {
-    use super::NI_VERSION;
-    let base_url = super::frc_maven_url();
-    let chipobject_header_url = format!(
-        "{base_url}/ni-libraries/chipobject/{NI_VERSION}/chipobject-{NI_VERSION}-headers.zip"
-    );
-    let chipobject_header_folder = super::header_folder().join("chipobject");
-    GOT_NI_CHIPOBJECT.call_once(|| {
-        super::download_and_extract_zip(&chipobject_header_url, &chipobject_header_folder).unwrap();
-    });
-    chipobject_header_folder
-}
+pub fn get_wpiutil() -> Result<PathBuf, &'static str> {
+    let wpiutil_folder = crate::project_root().join("wpiutil_ffi");
+    let sources_folder = wpiutil_folder.join("wpiutil/sources");
+    let headers_folder = wpiutil_folder.join("wpiutil/headers");
 
-pub fn get_wpilib_wpiutil() -> PathBuf {
-    use super::WPILIB_VERSION;
-    let base_url = super::frc_maven_url();
-    let wpiutil_header_url = format!(
-        "{base_url}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-headers.zip"
-    );
-    let wpiutil_header_folder = super::header_folder().join("wpiutil");
-    GOT_WPILIB_WPIUTIL.call_once(|| {
-        super::download_and_extract_zip(&wpiutil_header_url, &wpiutil_header_folder).unwrap();
+    GOT_WPIUTIL.call_once(|| {
+        std::fs::create_dir_all(&sources_folder).unwrap();
+        std::fs::create_dir_all(&headers_folder).unwrap();
+        let base_url = super::frc_maven_url();
+        use super::WPILIB_VERSION;
+        super::download_and_extract_zip(&format!("{base_url}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-headers.zip"), &headers_folder).unwrap();
+        super::download_and_extract_zip(&format!("{base_url}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-sources.zip"), &sources_folder).unwrap();
+        std::fs::remove_dir_all(sources_folder.join("jni")).ok();
     });
-    wpiutil_header_folder
+
+    if GOT_WPIUTIL.is_completed() {
+        Ok(headers_folder)
+    } else {
+        Err("failed to get wpiutil")
+    }
 }

@@ -223,7 +223,7 @@ struct DsEvent {
 impl DsEvent {
     fn new(manual_reset: bool, initial_state: bool) -> Self {
         let handle = unsafe {
-            wpiutil_ffi::WPI_CreateEvent(
+            wpihal_ffi::wpiutil_ffi::WPI_CreateEvent(
                 if manual_reset { 1 } else { 0 },
                 if initial_state { 1 } else { 0 },
             )
@@ -237,7 +237,7 @@ impl DsEvent {
     fn wait_timeout(&self, timeout: Duration) -> Result<(), ()> {
         unsafe {
             let mut timed_out = MaybeUninit::uninit();
-            wpiutil_ffi::WPI_WaitForObjectTimeout(
+            wpihal_ffi::wpiutil_ffi::WPI_WaitForObjectTimeout(
                 self.handle,
                 timeout.as_secs_f64(),
                 timed_out.as_mut_ptr(),
@@ -253,6 +253,6 @@ impl DsEvent {
 
 impl Drop for DsEvent {
     fn drop(&mut self) {
-        unsafe { wpiutil_ffi::WPI_DestroyEvent(self.handle) }
+        unsafe { wpihal_ffi::wpiutil_ffi::WPI_DestroyEvent(self.handle) }
     }
 }

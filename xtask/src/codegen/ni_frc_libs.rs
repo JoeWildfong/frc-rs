@@ -11,22 +11,20 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     let chipobject_header = include_folder.join("FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h");
     let chipobject_bindings = binding_gen
         .clone()
-        .header(chipobject_header.to_string_lossy())
-        .allowlist_file(chipobject_header.to_string_lossy())
+        .header(chipobject_header)
+        .allowlist_file(r".*NiFpga\.h")
         .generate()
-        .expect("failed to generate bindings");
+        .expect("failed to generate bindings for chipopbject");
     chipobject_bindings
         .write_to_file(ni_frc_libs_path.join("src/chipobject_bindings.rs"))
-        .expect("failed to write to file");
+        .expect("failed to write chipobject bindings to file");
 
     let netcomm_bindings = binding_gen
         .clone()
         .clang_args(["-x", "c++"])
         .clang_arg(format!(
             "-I{}",
-            include_folder
-                .join("FRC_NetworkCommunication")
-                .to_string_lossy()
+            include_folder.join("FRC_NetworkCommunication")
         ))
         .header_contents(
             "allnetcomm.h",
@@ -40,25 +38,15 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
 #include "UsageReporting.h"
         "#,
         )
-        .allowlist_file(format!(
-            "{}.*",
-            include_folder
-                .join("FRC_NetworkCommunication")
-                .to_string_lossy()
-        ))
-        .size_t_is_usize(false)
+        .allowlist_file(r".*[\\/]FRC_NetworkCommunication[\\/].*")
         .generate()
-        .expect("failed to generate bindings");
+        .expect("failed to generate bindings for netcomm");
     netcomm_bindings
         .write_to_file(ni_frc_libs_path.join("src/netcomm_bindings.rs"))
-        .expect("failed to write to file");
+        .expect("failed to netcomm bindings write to file");
 
     let visa_bindings = binding_gen
-        .clone()
-        .clang_arg(format!(
-            "-I{}",
-            include_folder.join("visa").to_string_lossy()
-        ))
+        .clang_arg(format!("-I{}", include_folder.join("visa")))
         .header_contents(
             "allvisa.h",
             r#"
@@ -66,16 +54,13 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
 #include "visatype.h"
         "#,
         )
-        .allowlist_file(format!(
-            "{}.*",
-            include_folder.join("visa").to_string_lossy()
-        ))
+        .allowlist_file(r".*[\\/]visa[\\/].*")
         .size_t_is_usize(false)
         .generate()
-        .expect("failed to generate bindings");
+        .expect("failed to generate bindings for visa");
     visa_bindings
         .write_to_file(ni_frc_libs_path.join("src/visa_bindings.rs"))
-        .expect("failed to write to file");
+        .expect("failed to write visa bindings to file");
 
     // compile shims into built-shims folder
     let compiler_path = super::find_wpilib_gcc();
@@ -86,18 +71,18 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     Command::new(&compiler_path)
         .args([
             "-shared",
-            &format!("{}/embcan/main.c", shims_folder.display()),
+            &format!("{}/embcan/main.c", shims_folder),
             "-o",
-            &format!("{}/libnirio_emb_can.so.23", shims_output.display()),
+            &format!("{}/libnirio_emb_can.so.23", shims_output),
         ])
         .spawn()?
         .wait()?;
     Command::new(&compiler_path)
         .args([
             "-shared",
-            &format!("{}/fpgalv/main.c", shims_folder.display()),
+            &format!("{}/fpgalv/main.c", shims_folder),
             "-o",
-            &format!("{}/libNiFpgaLv.so.13", shims_output.display()),
+            &format!("{}/libNiFpgaLv.so.13", shims_output),
         ])
         .spawn()?
         .wait()?;

@@ -3,9 +3,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     build
         .files(glob::glob("wpiutil/sources/**/*.cpp")?.map(|a| a.unwrap()))
         .cpp(true)
-        .flag("-std=c++20")
-        .flag("-w") // disable warnings
-        .flag_if_supported("-Wno-psabi")
+        .warnings(false)
+        .flag_if_supported("-w") // clang, gcc
+        .flag_if_supported("/w") // msvc
+        .flag_if_supported("-Wno-psabi") // gcc
+        .flag_if_supported("-std=c++20") // clang, gcc
+        .flag_if_supported("/std:c++20") // msvc
         .include("wpiutil/headers");
     if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
         build.include(ni_headers);

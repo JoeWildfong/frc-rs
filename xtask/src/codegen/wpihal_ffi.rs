@@ -1,4 +1,4 @@
-use std::{error::Error, path::Path};
+use std::error::Error;
 
 use super::libraries;
 
@@ -6,19 +6,19 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     let headers_folder = libraries::get_wpihal()?;
     let wpiutil_headers = libraries::get_wpiutil()?;
     let ni_frc_headers = crate::project_root().join("ni_frc_libs/ni-libraries/src/include");
-    let wrappers_folder = Path::new(file!()).parent().unwrap().join("wrappers");
+    let wrappers_folder = crate::project_root().join("xtask/src/codegen/wrappers");
 
     let bindings = bindgen::Builder::default()
         .clang_args(super::clang_args_for_toolchain(
             &super::find_wpilib_toolchain_root(),
         ))
         .clang_args([
-            format!("-isystem{}", headers_folder.display()),
-            format!("-isystem{}", ni_frc_headers.display()),
-            format!("-isystem{}", wpiutil_headers.display()),
+            format!("-isystem{}", headers_folder),
+            format!("-isystem{}", ni_frc_headers),
+            format!("-isystem{}", wpiutil_headers),
         ])
-        .header(headers_folder.join("hal/HAL.h").to_string_lossy())
-        .header(wrappers_folder.join("REVPH.h").to_string_lossy())
+        .header(headers_folder.join("hal/HAL.h"))
+        .header(wrappers_folder.join("REVPH.h"))
         .allowlist_function("HAL_.*")
         .allowlist_type("HAL_.*")
         .allowlist_var("HAL_.*")

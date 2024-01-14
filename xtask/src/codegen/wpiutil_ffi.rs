@@ -9,15 +9,11 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .clang_args(super::clang_args_for_toolchain(
             &super::find_wpilib_toolchain_root(),
         ))
-        .clang_args([format!(
+        .clang_arg(format!(
             "-isystem{}",
-            headers_folder.join("wpiutil/headers").display()
-        )])
-        .header(
-            headers_folder
-                .join("wpi/Synchronization.h")
-                .to_string_lossy(),
-        )
+            headers_folder.join("wpiutil/headers")
+        ))
+        .header(headers_folder.join("wpi/Synchronization.h"))
         .allowlist_function("WPI_.*")
         .allowlist_type("WPI_.*")
         .allowlist_var("WPI_.*")

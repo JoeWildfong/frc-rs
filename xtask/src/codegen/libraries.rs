@@ -1,9 +1,11 @@
-use std::{path::PathBuf, sync::Once};
+use std::sync::Once;
+
+use cargo_metadata::camino::Utf8PathBuf;
 
 static GOT_WPIHAL: Once = Once::new();
 static GOT_WPIUTIL: Once = Once::new();
 
-pub fn get_wpihal() -> Result<PathBuf, &'static str> {
+pub fn get_wpihal() -> Result<Utf8PathBuf, &'static str> {
     let wpihal_folder = crate::project_root().join("wpihal_ffi");
     let sources_folder = wpihal_folder.join("wpihal/sources");
     let headers_folder = wpihal_folder.join("wpihal/headers");
@@ -37,7 +39,7 @@ pub fn get_wpihal() -> Result<PathBuf, &'static str> {
     }
 }
 
-pub fn get_wpiutil() -> Result<PathBuf, &'static str> {
+pub fn get_wpiutil() -> Result<Utf8PathBuf, &'static str> {
     let wpiutil_folder = crate::project_root().join("wpiutil_ffi");
     let sources_folder = wpiutil_folder.join("wpiutil/sources");
     let headers_folder = wpiutil_folder.join("wpiutil/headers");

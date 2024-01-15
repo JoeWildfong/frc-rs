@@ -33,7 +33,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     build.compile("wpihal");
-    println!("cargo:rustc-link-lib=wpihal");
 
     // relink all dependencies of wpihal
     println!("cargo:rustc-link-lib=wpiutil");

@@ -2588,6 +2588,7 @@ pub const HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kAnalog:
     HAL_REVPHCompressorConfigType = 2;
 pub const HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kHybrid:
     HAL_REVPHCompressorConfigType = 3;
+#[doc = " The compressor configuration type"]
 pub type HAL_REVPHCompressorConfigType = i32;
 #[doc = " Storage for REV PH Version"]
 #[repr(C)]

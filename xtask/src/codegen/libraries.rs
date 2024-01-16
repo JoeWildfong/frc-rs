@@ -13,18 +13,17 @@ pub fn get_wpihal() -> Result<Utf8PathBuf, &'static str> {
     GOT_WPIHAL.call_once(|| {
         std::fs::create_dir_all(&sources_folder).unwrap();
         std::fs::create_dir_all(&headers_folder).unwrap();
-        let base_url = super::frc_maven_url();
-        use super::WPILIB_VERSION;
+        use super::{FRC_MAVEN_URL, WPILIB_VERSION};
         super::download_and_extract_zip(
             &format!(
-                "{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip"
+                "{FRC_MAVEN_URL}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-headers.zip"
             ),
             &headers_folder,
         )
         .unwrap();
         super::download_and_extract_zip(
             &format!(
-                "{base_url}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-sources.zip"
+                "{FRC_MAVEN_URL}/hal/hal-cpp/{WPILIB_VERSION}/hal-cpp-{WPILIB_VERSION}-sources.zip"
             ),
             &sources_folder,
         )
@@ -47,10 +46,9 @@ pub fn get_wpiutil() -> Result<Utf8PathBuf, &'static str> {
     GOT_WPIUTIL.call_once(|| {
         std::fs::create_dir_all(&sources_folder).unwrap();
         std::fs::create_dir_all(&headers_folder).unwrap();
-        let base_url = super::frc_maven_url();
-        use super::WPILIB_VERSION;
-        super::download_and_extract_zip(&format!("{base_url}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-headers.zip"), &headers_folder).unwrap();
-        super::download_and_extract_zip(&format!("{base_url}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-sources.zip"), &sources_folder).unwrap();
+        use super::{FRC_MAVEN_URL, WPILIB_VERSION};
+        super::download_and_extract_zip(&format!("{FRC_MAVEN_URL}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-headers.zip"), &headers_folder).unwrap();
+        super::download_and_extract_zip(&format!("{FRC_MAVEN_URL}/wpiutil/wpiutil-cpp/{WPILIB_VERSION}/wpiutil-cpp-{WPILIB_VERSION}-sources.zip"), &sources_folder).unwrap();
         std::fs::remove_dir_all(sources_folder.join("jni")).ok();
     });
 

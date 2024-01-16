@@ -14,12 +14,9 @@ mod wpiutil_sys;
 const WPILIB_YEAR: &str = "2024";
 const WPILIB_VERSION: &str = "2024.1.1";
 
+const FRC_MAVEN_URL: &str = "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first";
+
 pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error>> {
-    std::fs::remove_dir_all(header_folder()).unwrap_or_else(|err| match err.kind() {
-        std::io::ErrorKind::NotFound => {}
-        _ => panic!("failed to remove headers folder"),
-    });
-    std::fs::create_dir_all(header_folder()).expect("failed to create headers folder");
     match crate_name {
         Some(t) => match t.as_str() {
             "wpihal_sys" => wpihal_sys::generate_bindings()?,
@@ -34,14 +31,6 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
         }
     }
     Ok(())
-}
-
-pub fn frc_maven_url() -> String {
-    "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first".to_owned()
-}
-
-pub fn header_folder() -> Utf8PathBuf {
-    super::project_root().join("xtask/target/headers")
 }
 
 pub fn download_and_extract_zip(

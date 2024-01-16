@@ -5,7 +5,7 @@
 #![allow(clippy::pedantic)]
 
 use std::{ffi::CStr, mem::MaybeUninit};
-pub use wpiutil_ffi;
+pub use wpiutil_sys;
 
 include!("bindings.rs");
 

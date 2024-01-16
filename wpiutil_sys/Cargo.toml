@@ -1,5 +1,5 @@
 [package]
-name = "wpiutil_ffi"
+name = "wpiutil_sys"
 version = "0.1.0"
 edition = "2021"
 links = "wpiutil"
@@ -9,7 +9,7 @@ links = "wpiutil"
 [dependencies]
 
 [target.armv7-unknown-linux-gnueabi.dependencies]
-ni_frc_libs = { path = "../ni_frc_libs" }
+ni_frc_sys = { path = "../ni_frc_sys" }
 
 [build-dependencies]
 cc = { version = "1.0.83", features = ["parallel"] }

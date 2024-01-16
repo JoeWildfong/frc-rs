@@ -32,8 +32,8 @@ impl ControllerAxes {
     }
 }
 
-impl From<wpihal_ffi::HAL_JoystickAxes> for ControllerAxes {
-    fn from(value: wpihal_ffi::HAL_JoystickAxes) -> Self {
+impl From<wpihal_sys::HAL_JoystickAxes> for ControllerAxes {
+    fn from(value: wpihal_sys::HAL_JoystickAxes) -> Self {
         Self {
             count: value.count,
             axes: value.axes,
@@ -57,8 +57,8 @@ impl ControllerPOVs {
     }
 }
 
-impl From<wpihal_ffi::HAL_JoystickPOVs> for ControllerPOVs {
-    fn from(value: wpihal_ffi::HAL_JoystickPOVs) -> Self {
+impl From<wpihal_sys::HAL_JoystickPOVs> for ControllerPOVs {
+    fn from(value: wpihal_sys::HAL_JoystickPOVs) -> Self {
         Self {
             count: value.count,
             povs: value.povs,
@@ -82,8 +82,8 @@ impl ControllerButtons {
     }
 }
 
-impl From<wpihal_ffi::HAL_JoystickButtons> for ControllerButtons {
-    fn from(value: wpihal_ffi::HAL_JoystickButtons) -> Self {
+impl From<wpihal_sys::HAL_JoystickButtons> for ControllerButtons {
+    fn from(value: wpihal_sys::HAL_JoystickButtons) -> Self {
         Self {
             count: value.count,
             buttons: value.buttons,
@@ -153,7 +153,7 @@ impl DriverStation {
     pub fn get_controller_state(&self, port: u8) -> Option<ControllerState> {
         let axes = unsafe {
             let mut axes = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickAxes(i32::from(port), axes.as_mut_ptr());
+            let result = wpihal_sys::HAL_GetJoystickAxes(i32::from(port), axes.as_mut_ptr());
             if result != 0 {
                 return None;
             }
@@ -161,7 +161,7 @@ impl DriverStation {
         };
         let povs = unsafe {
             let mut povs = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickPOVs(i32::from(port), povs.as_mut_ptr());
+            let result = wpihal_sys::HAL_GetJoystickPOVs(i32::from(port), povs.as_mut_ptr());
             if result != 0 {
                 return None;
             }
@@ -169,7 +169,7 @@ impl DriverStation {
         };
         let buttons = unsafe {
             let mut buttons = MaybeUninit::uninit();
-            let result = wpihal_ffi::HAL_GetJoystickButtons(i32::from(port), buttons.as_mut_ptr());
+            let result = wpihal_sys::HAL_GetJoystickButtons(i32::from(port), buttons.as_mut_ptr());
             if result != 0 {
                 return None;
             }
@@ -187,7 +187,7 @@ impl DriverStation {
         // SAFETY: safe because HAL_GetControlWord is guaranteed to initialize control_word
         let control_word = unsafe {
             let mut control_word = MaybeUninit::uninit();
-            wpihal_ffi::HAL_GetControlWord(control_word.as_mut_ptr());
+            wpihal_sys::HAL_GetControlWord(control_word.as_mut_ptr());
             control_word.assume_init()
         };
         if control_word.enabled() != 0 {
@@ -223,13 +223,13 @@ struct DsEvent {
 impl DsEvent {
     fn new(manual_reset: bool, initial_state: bool) -> Self {
         let handle = unsafe {
-            wpihal_ffi::wpiutil_ffi::WPI_CreateEvent(
+            wpihal_sys::wpiutil_sys::WPI_CreateEvent(
                 if manual_reset { 1 } else { 0 },
                 if initial_state { 1 } else { 0 },
             )
         };
         unsafe {
-            wpihal_ffi::HAL_ProvideNewDataEventHandle(handle);
+            wpihal_sys::HAL_ProvideNewDataEventHandle(handle);
         }
         Self { handle }
     }
@@ -237,7 +237,7 @@ impl DsEvent {
     fn wait_timeout(&self, timeout: Duration) -> Result<(), ()> {
         unsafe {
             let mut timed_out = MaybeUninit::uninit();
-            wpihal_ffi::wpiutil_ffi::WPI_WaitForObjectTimeout(
+            wpihal_sys::wpiutil_sys::WPI_WaitForObjectTimeout(
                 self.handle,
                 timeout.as_secs_f64(),
                 timed_out.as_mut_ptr(),
@@ -253,6 +253,6 @@ impl DsEvent {
 
 impl Drop for DsEvent {
     fn drop(&mut self) {
-        unsafe { wpihal_ffi::wpiutil_ffi::WPI_DestroyEvent(self.handle) }
+        unsafe { wpihal_sys::wpiutil_sys::WPI_DestroyEvent(self.handle) }
     }
 }

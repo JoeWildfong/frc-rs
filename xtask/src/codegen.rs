@@ -7,9 +7,9 @@ use std::{
 use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 
 mod libraries;
-mod ni_frc_libs;
-mod wpihal_ffi;
-mod wpiutil_ffi;
+mod ni_frc_sys;
+mod wpihal_sys;
+mod wpiutil_sys;
 
 const WPILIB_YEAR: &str = "2024";
 const WPILIB_VERSION: &str = "2024.1.1";
@@ -22,15 +22,15 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
     std::fs::create_dir_all(header_folder()).expect("failed to create headers folder");
     match crate_name {
         Some(t) => match t.as_str() {
-            "wpihal_ffi" => wpihal_ffi::generate_bindings()?,
-            "wpiutil_ffi" => wpiutil_ffi::generate_bindings()?,
-            "ni_frc_libs" => ni_frc_libs::generate_bindings()?,
+            "wpihal_sys" => wpihal_sys::generate_bindings()?,
+            "wpiutil_sys" => wpiutil_sys::generate_bindings()?,
+            "ni_frc_sys" => ni_frc_sys::generate_bindings()?,
             invalid => return Err(format!("Invalid crate name: {invalid}").into()),
         },
         None => {
-            wpihal_ffi::generate_bindings()?;
-            wpiutil_ffi::generate_bindings()?;
-            ni_frc_libs::generate_bindings()?;
+            wpihal_sys::generate_bindings()?;
+            wpiutil_sys::generate_bindings()?;
+            ni_frc_sys::generate_bindings()?;
         }
     }
     Ok(())

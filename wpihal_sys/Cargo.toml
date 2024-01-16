@@ -1,5 +1,5 @@
 [package]
-name = "wpihal_ffi"
+name = "wpihal_sys"
 version = "0.0.0"
 edition = "2021"
 links = "wpihal"
@@ -7,10 +7,10 @@ links = "wpihal"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wpiutil_ffi = { path = "../wpiutil_ffi" }
+wpiutil_sys = { path = "../wpiutil_sys" }
 
 [target.armv7-unknown-linux-gnueabi.dependencies]
-ni_frc_libs = { path = "../ni_frc_libs" }
+ni_frc_sys = { path = "../ni_frc_sys" }
 
 [build-dependencies]
 cc = { version = "1.0.83", features = ["parallel"] }

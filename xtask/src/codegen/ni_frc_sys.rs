@@ -1,8 +1,8 @@
 use std::{error::Error, process::Command};
 
 pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
-    let ni_frc_libs_path = crate::project_root().join("ni_frc_libs");
-    let include_folder = ni_frc_libs_path.join("ni-libraries/src/include");
+    let ni_frc_sys_path = crate::project_root().join("ni_frc_sys");
+    let include_folder = ni_frc_sys_path.join("ni-libraries/src/include");
 
     let binding_gen = bindgen::Builder::default().clang_args(super::clang_args_for_toolchain(
         &super::find_wpilib_toolchain_root(),
@@ -16,7 +16,7 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .generate()
         .expect("failed to generate bindings for chipopbject");
     chipobject_bindings
-        .write_to_file(ni_frc_libs_path.join("src/chipobject_bindings.rs"))
+        .write_to_file(ni_frc_sys_path.join("src/chipobject_bindings.rs"))
         .expect("failed to write chipobject bindings to file");
 
     let netcomm_bindings = binding_gen
@@ -42,7 +42,7 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .generate()
         .expect("failed to generate bindings for netcomm");
     netcomm_bindings
-        .write_to_file(ni_frc_libs_path.join("src/netcomm_bindings.rs"))
+        .write_to_file(ni_frc_sys_path.join("src/netcomm_bindings.rs"))
         .expect("failed to netcomm bindings write to file");
 
     let visa_bindings = binding_gen
@@ -59,13 +59,13 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .generate()
         .expect("failed to generate bindings for visa");
     visa_bindings
-        .write_to_file(ni_frc_libs_path.join("src/visa_bindings.rs"))
+        .write_to_file(ni_frc_sys_path.join("src/visa_bindings.rs"))
         .expect("failed to write visa bindings to file");
 
     // compile shims into built-shims folder
     let compiler_path = super::find_wpilib_gcc();
-    let shims_folder = ni_frc_libs_path.join("ni-libraries/src/shims");
-    let shims_output = ni_frc_libs_path.join("built-shims");
+    let shims_folder = ni_frc_sys_path.join("ni-libraries/src/shims");
+    let shims_output = ni_frc_sys_path.join("built-shims");
     std::fs::remove_dir_all(&shims_output).ok();
     std::fs::create_dir_all(&shims_output)?;
     Command::new(&compiler_path)

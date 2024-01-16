@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "wpihal_ffi",
-    "wpiutil_ffi",
-    "ni_frc_libs",
+    "wpihal_sys",
+    "wpiutil_sys",
+    "ni_frc_sys",
     "xtask",
     "frc",
     "toy_robot",

@@ -20,7 +20,7 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         .generate()
         .expect("failed to generate bindings");
     bindings
-        .write_to_file(crate::project_root().join("wpiutil_ffi/src/bindings.rs"))
+        .write_to_file(crate::project_root().join("wpiutil_sys/src/bindings.rs"))
         .expect("failed to write to file");
     Ok(())
 }

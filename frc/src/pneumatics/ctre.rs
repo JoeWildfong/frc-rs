@@ -3,14 +3,14 @@ use std::ffi::CStr;
 use super::{Compressor, PneumaticsController};
 
 pub struct CtrePcm {
-    handle: wpihal_ffi::HAL_CTREPCMHandle,
+    handle: wpihal_sys::HAL_CTREPCMHandle,
 }
 
 impl CtrePcm {
     pub fn new(can_id: i32) -> Self {
         let handle = unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_InitializeCTREPCM(
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_InitializeCTREPCM(
                     can_id,
                     CStr::from_bytes_with_nul(b"\0").unwrap().as_ptr(),
                     status,
@@ -40,8 +40,8 @@ impl CtrePcm {
 impl PneumaticsController for CtrePcm {
     fn get_solenoids(&self) -> u32 {
         let solenoids = unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_GetCTREPCMSolenoids(self.handle, status)
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetCTREPCMSolenoids(self.handle, status)
             })
         };
         solenoids as u32
@@ -49,8 +49,8 @@ impl PneumaticsController for CtrePcm {
 
     fn set_solenoids(&self, mask: u32, values: u32) {
         unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_SetCTREPCMSolenoids(
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetCTREPCMSolenoids(
                     self.handle,
                     mask as i32,
                     values as i32,
@@ -69,7 +69,7 @@ impl Default for CtrePcm {
 
 impl Drop for CtrePcm {
     fn drop(&mut self) {
-        unsafe { wpihal_ffi::HAL_FreeCTREPCM(self.handle) }
+        unsafe { wpihal_sys::HAL_FreeCTREPCM(self.handle) }
     }
 }
 
@@ -80,16 +80,16 @@ pub struct CtreCompressor<'a> {
 impl<'a> Compressor for CtreCompressor<'a> {
     fn get_enabled(&self) -> bool {
         unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_GetCTREPCMCompressor(self.pcm.handle, status)
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetCTREPCMCompressor(self.pcm.handle, status)
             }) != 0
         }
     }
 
     fn get_pressure_switch(&self) -> bool {
         unsafe {
-            wpihal_ffi::panic_on_hal_error(|status| {
-                wpihal_ffi::HAL_GetCTREPCMPressureSwitch(self.pcm.handle, status)
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetCTREPCMPressureSwitch(self.pcm.handle, status)
             }) != 0
         }
     }

@@ -4,5 +4,9 @@ rustflags = [
     "-C", "target-cpu=cortex-a9"
 ]
 
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
 [env]
 CXX_armv7_unknown_linux_gnueabi = "arm-frc2024-linux-gnueabi-g++"

@@ -1,7 +1,7 @@
 use frc::{
     pneumatics::{
         ctre::{CtrePcm, CtrePneumatics},
-        DoubleSolenoid, DoubleSolenoidState, Solenoid,
+        DoubleSolenoid, DoubleSolenoidState,
     },
     reactor::driver_station::DriverStation,
 };
@@ -12,15 +12,11 @@ async fn main() {
     let (
         _compressor,
         CtrePneumatics {
-            channel0,
-            channel1,
-            channel5,
-            ..
+            channel0, channel1, ..
         },
     ) = pneumatics.as_parts();
 
     let mut double_solenoid = DoubleSolenoid::new(channel0, channel1);
-    let mut single_solenoid = Solenoid::new(channel5);
 
     let ds = DriverStation::new();
 
@@ -32,9 +28,6 @@ async fn main() {
                 } else {
                     DoubleSolenoidState::Backward
                 });
-            }
-            if let Some(button1) = controller_state.button(1) {
-                single_solenoid.set(button1);
             }
         }
         ds.wait_for_packet().await;

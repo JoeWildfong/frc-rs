@@ -1,6 +1,8 @@
 use std::{env, error::Error, sync::OnceLock};
 
-use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
+pub(crate) use cargo_metadata::camino as camino;
+
+use camino::{Utf8Path, Utf8PathBuf};
 
 mod codegen;
 

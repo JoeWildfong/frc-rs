@@ -1,6 +1,6 @@
 use std::sync::Once;
 
-use cargo_metadata::camino::Utf8PathBuf;
+use crate::camino::Utf8PathBuf;
 
 static GOT_WPIHAL: Once = Once::new();
 static GOT_WPIUTIL: Once = Once::new();

@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
+use crate::camino::{Utf8Path, Utf8PathBuf};
 
 mod libraries;
 mod ni_frc_sys;
@@ -12,7 +12,7 @@ mod wpihal_sys;
 mod wpiutil_sys;
 
 const WPILIB_YEAR: &str = "2024";
-const WPILIB_VERSION: &str = "2024.1.1";
+const WPILIB_VERSION: &str = "2024.2.1";
 
 const FRC_MAVEN_URL: &str = "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first";
 

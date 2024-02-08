@@ -14,6 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         build.include(ni_headers);
     }
     build.compile("wpiutil");
+    println!("cargo:rerun-if-changed=wpiutil/");
     println!(
         "cargo:include={}/wpiutil/headers",
         std::env::current_dir()?.display()

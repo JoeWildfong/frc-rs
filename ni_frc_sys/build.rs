@@ -29,6 +29,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
     println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
 
+    println!("cargo:rerun-if-changed=ni-libraries/");
+    println!("cargo:rerun-if-changed=built-shims/");
     println!("cargo:include={}/include", ni_src.display());
     Ok(())
 }

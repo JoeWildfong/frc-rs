@@ -44,6 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
     }
 
+    println!("cargo:rerun-if-changed=wpihal/");
     println!(
         "cargo:include={}/wpihal/headers",
         std::env::current_dir()?.display()

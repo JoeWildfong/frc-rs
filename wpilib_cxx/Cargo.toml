@@ -1,0 +1,15 @@
+[package]
+name = "wpilib_cxx"
+version = "0.1.0"
+edition = "2021"
+links = "wpilib"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cxx.workspace = true
+wpihal_sys.workspace = true
+
+[build-dependencies]
+cxx-build = { workspace = true, features = ["parallel"] }
+glob.workspace = true

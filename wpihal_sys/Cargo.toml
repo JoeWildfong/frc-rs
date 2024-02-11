@@ -7,11 +7,11 @@ links = "wpihal"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wpiutil_sys = { path = "../wpiutil_sys" }
+wpiutil_sys.workspace = true
 
 [target.armv7-unknown-linux-gnueabi.dependencies]
-ni_frc_sys = { path = "../ni_frc_sys" }
+ni_frc_sys.workspace = true
 
 [build-dependencies]
-cc = { version = "1.0.83", features = ["parallel"] }
-glob = "0.3.1"
+cc = { workspace = true, features = ["parallel"] }
+glob.workspace = true

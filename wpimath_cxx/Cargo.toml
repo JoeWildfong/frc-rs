@@ -1,0 +1,15 @@
+[package]
+name = "wpimath_cxx"
+version = "0.1.0"
+edition = "2021"
+links = "wpimath"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wpiutil_sys.workspace = true
+cxx.workspace = true
+
+[build-dependencies]
+cxx-build = { workspace = true, features = ["parallel"] }
+glob.workspace = true

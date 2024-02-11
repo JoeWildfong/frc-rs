@@ -9,4 +9,4 @@ links = "ni_frc"
 [dependencies]
 
 [build-dependencies]
-cc = "1.0.83"
+cc = { workspace = true, features = ["parallel"] }

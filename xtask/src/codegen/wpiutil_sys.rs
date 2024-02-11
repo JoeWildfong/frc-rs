@@ -11,9 +11,16 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
         ))
         .clang_arg(format!(
             "-isystem{}",
-            headers_folder.join("wpiutil/headers")
+            headers_folder
         ))
-        .header(headers_folder.join("wpi/Synchronization.h"))
+        .clang_args(["-std=c++20"])
+        .header_contents(
+            "wpiutil.hpp",
+            r#"
+#include "wpi/Synchronization.h"
+#include "wpi/DataLog.h"
+            "#
+        )
         .allowlist_function("WPI_.*")
         .allowlist_type("WPI_.*")
         .allowlist_var("WPI_.*")

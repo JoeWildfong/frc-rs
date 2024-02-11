@@ -8,7 +8,11 @@ use crate::camino::{Utf8Path, Utf8PathBuf};
 
 mod libraries;
 mod ni_frc_sys;
+mod ntcore_sys;
 mod wpihal_sys;
+mod wpilib_cxx;
+mod wpimath_cxx;
+mod wpinet_cxx;
 mod wpiutil_sys;
 
 const WPILIB_YEAR: &str = "2024";
@@ -20,7 +24,11 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
     match crate_name {
         Some(t) => match t.as_str() {
             "wpihal_sys" => wpihal_sys::generate_bindings()?,
+            "wpinet_cxx" => wpinet_cxx::download()?,
             "wpiutil_sys" => wpiutil_sys::generate_bindings()?,
+            "wpilib_cxx" => wpilib_cxx::download()?,
+            "wpimath_cxx" => wpimath_cxx::download()?,
+            "ntcore_sys" => ntcore_sys::generate_bindings()?,
             "ni_frc_sys" => ni_frc_sys::generate_bindings()?,
             invalid => return Err(format!("Invalid crate name: {invalid}").into()),
         },

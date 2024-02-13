@@ -3268,6 +3268,7 @@ impl HAL_REVPHStickyFaults {
     }
 }
 extern "C" {
+    #[doc = " Initializes a PH.\n\n @param[in] module             the CAN ID to initialize\n @param[in] allocationLocation the location where the allocation is occurring\n                               (can be null)\n @param[out] status            Error status variable. 0 on success.\n @return the created PH handle"]
     pub fn HAL_InitializeREVPH(
         module: i32,
         allocationLocation: *const ::std::os::raw::c_char,
@@ -3275,18 +3276,23 @@ extern "C" {
     ) -> HAL_REVPHHandle;
 }
 extern "C" {
+    #[doc = " Frees a PH handle.\n\n @param[in] handle the PH handle"]
     pub fn HAL_FreeREVPH(handle: HAL_REVPHHandle);
 }
 extern "C" {
+    #[doc = " Checks if a solenoid channel number is valid.\n\n @param[in] channel the channel to check\n @return true if the channel is valid, otherwise false"]
     pub fn HAL_CheckREVPHSolenoidChannel(channel: i32) -> HAL_Bool;
 }
 extern "C" {
+    #[doc = " Checks if a PH module (CAN ID) is valid.\n\n @param[in] module the module to check\n @return true if the module is valid, otherwise false"]
     pub fn HAL_CheckREVPHModuleNumber(module: i32) -> HAL_Bool;
 }
 extern "C" {
+    #[doc = " Get whether compressor is turned on.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return true if the compressor is turned on"]
     pub fn HAL_GetREVPHCompressor(handle: HAL_REVPHHandle, status: *mut i32) -> HAL_Bool;
 }
 extern "C" {
+    #[doc = " Send compressor configuration to the PH.\n\n @param[in] handle  the PH handle\n @param[in] config  compressor configuration\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHCompressorConfig(
         handle: HAL_REVPHHandle,
         config: *const HAL_REVPHCompressorConfig,
@@ -3294,12 +3300,15 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Disable Compressor.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHClosedLoopControlDisabled(handle: HAL_REVPHHandle, status: *mut i32);
 }
 extern "C" {
+    #[doc = " Enables the compressor in digital mode using the digital pressure switch. The\n compressor will turn on when the pressure switch indicates that the system is\n not full, and will turn off when the pressure switch indicates that the\n system is full.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHClosedLoopControlDigital(handle: HAL_REVPHHandle, status: *mut i32);
 }
 extern "C" {
+    #[doc = " Enables the compressor in analog mode. This mode uses an analog\n pressure sensor connected to analog channel 0 to cycle the compressor. The\n compressor will turn on when the pressure drops below minAnalogVoltage and\n will turn off when the pressure reaches maxAnalogVoltage. This mode is only\n supported by the REV PH with the REV Analog Pressure Sensor connected to\n analog channel 0.\n @param[in] handle  the PH handle\n @param[in] minAnalogVoltage The compressor will turn on when the analog\n pressure sensor voltage drops below this value\n @param[in] maxAnalogVoltage The compressor will turn off when the analog\n pressure sensor reaches this value.\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHClosedLoopControlAnalog(
         handle: HAL_REVPHHandle,
         minAnalogVoltage: f64,
@@ -3308,6 +3317,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Enables the compressor in hybrid mode. This mode uses both a digital\n pressure switch and an analog pressure sensor connected to analog channel 0\n to cycle the compressor.\n\n The compressor will turn on when \\a both:\n\n - The digital pressure switch indicates the system is not full AND\n - The analog pressure sensor indicates that the pressure in the system is\n below the specified minimum pressure.\n\n The compressor will turn off when \\a either:\n\n - The digital pressure switch is disconnected or indicates that the system\n is full OR\n - The pressure detected by the analog sensor is greater than the specified\n maximum pressure.\n\n @param[in] handle  the PH handle\n @param[in] minAnalogVoltage The compressor will turn on when the analog\n pressure sensor voltage drops below this value and the pressure switch\n indicates that the system is not full.\n @param[in] maxAnalogVoltage The compressor will turn off when the analog\n pressure sensor reaches this value or the pressure switch is disconnected or\n indicates that the system is full.\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHClosedLoopControlHybrid(
         handle: HAL_REVPHHandle,
         minAnalogVoltage: f64,
@@ -3316,18 +3326,22 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Get compressor configuration from the PH.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return compressor configuration"]
     pub fn HAL_GetREVPHCompressorConfig(
         handle: HAL_REVPHHandle,
         status: *mut i32,
     ) -> HAL_REVPHCompressorConfigType;
 }
 extern "C" {
+    #[doc = " Returns the state of the digital pressure switch.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return True if pressure switch indicates that the system is full,\n otherwise false."]
     pub fn HAL_GetREVPHPressureSwitch(handle: HAL_REVPHHandle, status: *mut i32) -> HAL_Bool;
 }
 extern "C" {
+    #[doc = " Returns the current drawn by the compressor.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return The current drawn by the compressor in amps."]
     pub fn HAL_GetREVPHCompressorCurrent(handle: HAL_REVPHHandle, status: *mut i32) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the raw voltage of the specified analog\n input channel.\n\n @param[in] handle  the PH handle\n @param[in] channel The analog input channel to read voltage from.\n @param[out] status Error status variable. 0 on success.\n @return The voltage of the specified analog input channel in volts."]
     pub fn HAL_GetREVPHAnalogVoltage(
         handle: HAL_REVPHHandle,
         channel: i32,
@@ -3335,18 +3349,23 @@ extern "C" {
     ) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the current input voltage for the PH.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return The input voltage in volts."]
     pub fn HAL_GetREVPHVoltage(handle: HAL_REVPHHandle, status: *mut i32) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the current voltage of the regulated 5v supply.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return The current voltage of the 5v supply in volts."]
     pub fn HAL_GetREVPH5VVoltage(handle: HAL_REVPHHandle, status: *mut i32) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the total current drawn by all solenoids.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return Total current drawn by all solenoids in amps."]
     pub fn HAL_GetREVPHSolenoidCurrent(handle: HAL_REVPHHandle, status: *mut i32) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the current voltage of the solenoid power supply.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return The current voltage of the solenoid power supply in volts."]
     pub fn HAL_GetREVPHSolenoidVoltage(handle: HAL_REVPHHandle, status: *mut i32) -> f64;
 }
 extern "C" {
+    #[doc = " Returns the hardware and firmware versions of the PH.\n\n @param[in] handle  the PH handle\n @param[out] version The hardware and firmware versions.\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_GetREVPHVersion(
         handle: HAL_REVPHHandle,
         version: *mut HAL_REVPHVersion,
@@ -3354,15 +3373,19 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Gets a bitmask of solenoid values.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success.\n @return solenoid values"]
     pub fn HAL_GetREVPHSolenoids(handle: HAL_REVPHHandle, status: *mut i32) -> i32;
 }
 extern "C" {
+    #[doc = " Sets solenoids on a PH.\n\n @param[in] handle  the PH handle\n @param[in] mask bitmask to set\n @param[in] values solenoid values\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_SetREVPHSolenoids(handle: HAL_REVPHHandle, mask: i32, values: i32, status: *mut i32);
 }
 extern "C" {
+    #[doc = " Fire a single solenoid shot for the specified duration.\n\n @param[in] handle  the PH handle\n @param[in] index solenoid index\n @param[in] durMs shot duration in ms\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_FireREVPHOneShot(handle: HAL_REVPHHandle, index: i32, durMs: i32, status: *mut i32);
 }
 extern "C" {
+    #[doc = " Returns the faults currently active on the PH.\n\n @param[in] handle  the PH handle\n @param[out] faults The faults.\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_GetREVPHFaults(
         handle: HAL_REVPHHandle,
         faults: *mut HAL_REVPHFaults,
@@ -3370,6 +3393,7 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Returns the sticky faults currently active on this device.\n\n @param[in] handle  the PH handle\n @param[out] stickyFaults The sticky faults.\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_GetREVPHStickyFaults(
         handle: HAL_REVPHHandle,
         stickyFaults: *mut HAL_REVPHStickyFaults,
@@ -3377,5 +3401,6 @@ extern "C" {
     );
 }
 extern "C" {
+    #[doc = " Clears the sticky faults.\n\n @param[in] handle  the PH handle\n @param[out] status Error status variable. 0 on success."]
     pub fn HAL_ClearREVPHStickyFaults(handle: HAL_REVPHHandle, status: *mut i32);
 }

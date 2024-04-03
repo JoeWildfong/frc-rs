@@ -2,11 +2,13 @@
 name = "wpinet_cxx"
 version = "0.1.0"
 edition = "2021"
+links = "wpinet"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 cxx.workspace = true
+wpiutil_sys.workspace = true
 
 [build-dependencies]
 cxx-build = { workspace = true, features = ["parallel"] }

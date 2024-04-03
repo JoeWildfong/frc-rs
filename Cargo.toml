@@ -7,6 +7,8 @@ members = [
     "wpiutil_sys",
     "ni_frc_sys",
     "ntcore_sys",
+    "cscore_sys",
+    "wpi_opencv_cxx",
     "frc",
     "xtask",
     "toy_robot",
@@ -21,6 +23,8 @@ wpinet_cxx = { path = "./wpinet_cxx" }
 wpiutil_sys = { path = "./wpiutil_sys" }
 ni_frc_sys = { path = "./ni_frc_sys" }
 ntcore_sys = { path = "./ntcore_sys" }
+cscore_sys = { path = "./cscore_sys" }
+wpi_opencv_cxx = { path = "./wpi_opencv_cxx" }
 frc = { path = "./frc" }
 
 cxx = "1.0.116"

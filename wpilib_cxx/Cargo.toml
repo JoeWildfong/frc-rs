@@ -9,6 +9,10 @@ links = "wpilib"
 [dependencies]
 cxx.workspace = true
 wpihal_sys.workspace = true
+wpiutil_sys.workspace = true
+wpinet_cxx.workspace = true
+wpimath_cxx.workspace = true
+ntcore_sys.workspace = true
 
 [build-dependencies]
 cxx-build = { workspace = true, features = ["parallel"] }

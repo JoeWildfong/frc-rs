@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .files(unwrap_all_glob("wpihal/sources/*.cpp"))
         .files(unwrap_all_glob("wpihal/sources/cpp/**/*.cpp"))
         .files(unwrap_all_glob("wpihal/sources/handles/**/*.cpp"))
-        .include("wpihal/headers");
+        .include("wpihal/include");
     if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
         build.include(ni_headers);
     }
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("cargo:rerun-if-changed=wpihal/");
     println!(
-        "cargo:include={}/wpihal/headers",
+        "cargo:include={}/wpihal/include",
         std::env::current_dir()?.display()
     );
     Ok(())

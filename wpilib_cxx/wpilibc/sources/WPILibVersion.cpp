@@ -3,5 +3,5 @@
  * any time the publish task is run, or when this file is deleted.
  */
 const char* GetWPILibVersion() {
-  return "2024.2.1";
+  return "2024.3.1";
 }

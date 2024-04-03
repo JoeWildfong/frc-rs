@@ -9,14 +9,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .flag_if_supported("-Wno-psabi") // gcc
         .flag_if_supported("-std=c++20") // clang, gcc
         .flag_if_supported("/std:c++20") // msvc
-        .include("wpiutil/headers");
+        .include("wpiutil/include");
     if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
         build.include(ni_headers);
     }
     build.compile("wpiutil");
     println!("cargo:rerun-if-changed=wpiutil/");
     println!(
-        "cargo:include={}/wpiutil/headers",
+        "cargo:include={}/wpiutil/include",
         std::env::current_dir()?.display()
     );
     Ok(())

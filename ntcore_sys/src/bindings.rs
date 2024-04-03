@@ -1119,6 +1119,8 @@ pub struct NT_PubSubOptions {
     pub disableLocal: NT_Bool,
     #[doc = " For entries, don't queue (for ReadQueue) value updates for the entry's\n internal publisher."]
     pub excludeSelf: NT_Bool,
+    #[doc = " For subscriptions, don't share the existence of the subscription with the\n network. Note this means updates will not be received from the network\n unless another subscription overlaps with this one, and the subscription\n will not appear in metatopics."]
+    pub hidden: NT_Bool,
 }
 #[test]
 fn bindgen_test_layout_NT_PubSubOptions() {
@@ -1126,7 +1128,7 @@ fn bindgen_test_layout_NT_PubSubOptions() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<NT_PubSubOptions>(),
-        48usize,
+        56usize,
         concat!("Size of: ", stringify!(NT_PubSubOptions))
     );
     assert_eq!(
@@ -1242,6 +1244,16 @@ fn bindgen_test_layout_NT_PubSubOptions() {
             stringify!(NT_PubSubOptions),
             "::",
             stringify!(excludeSelf)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).hidden) as usize - ptr as usize },
+        48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(NT_PubSubOptions),
+            "::",
+            stringify!(hidden)
         )
     );
 }

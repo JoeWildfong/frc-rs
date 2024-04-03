@@ -1,0 +1,15 @@
+[package]
+name = "cscore_sys"
+version = "0.1.0"
+edition = "2021"
+links = "cscore"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wpiutil_sys.workspace = true
+wpinet_cxx.workspace = true
+
+[build-dependencies]
+cc = { workspace = true, features = ["parallel"] }
+glob.workspace = true

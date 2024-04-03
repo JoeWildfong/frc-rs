@@ -9,14 +9,17 @@ use crate::camino::{Utf8Path, Utf8PathBuf};
 mod libraries;
 mod ni_frc_sys;
 mod ntcore_sys;
+mod cscore_sys;
 mod wpihal_sys;
 mod wpilib_cxx;
 mod wpimath_cxx;
 mod wpinet_cxx;
 mod wpiutil_sys;
+mod wpi_opencv_cxx;
 
 const WPILIB_YEAR: &str = "2024";
-const WPILIB_VERSION: &str = "2024.2.1";
+const WPILIB_VERSION: &str = "2024.3.1";
+const OPENCV_VERSION: &str = "4.8.0-2";
 
 const FRC_MAVEN_URL: &str = "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first";
 
@@ -29,13 +32,21 @@ pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error
             "wpilib_cxx" => wpilib_cxx::download()?,
             "wpimath_cxx" => wpimath_cxx::download()?,
             "ntcore_sys" => ntcore_sys::generate_bindings()?,
+            "cscore_sys" => cscore_sys::generate_bindings()?,
             "ni_frc_sys" => ni_frc_sys::generate_bindings()?,
+            "wpi_opencv_cxx" => wpi_opencv_cxx::download()?,
             invalid => return Err(format!("Invalid crate name: {invalid}").into()),
         },
         None => {
             wpihal_sys::generate_bindings()?;
+            wpinet_cxx::download()?;
             wpiutil_sys::generate_bindings()?;
+            wpilib_cxx::download()?;
+            wpimath_cxx::download()?;
+            ntcore_sys::generate_bindings()?;
+            cscore_sys::generate_bindings()?;
             ni_frc_sys::generate_bindings()?;
+            wpi_opencv_cxx::download()?;
         }
     }
     Ok(())

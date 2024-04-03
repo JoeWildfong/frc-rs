@@ -1,7 +1,7 @@
 #[cxx::bridge]
 mod ffi {
     unsafe extern "C++" {
-        include!("wpilibc/headers/frc/drive/DifferentialDrive.h");
+        include!("wpilibc/include/frc/drive/DifferentialDrive.h");
         type DifferentialDrive;
     }
 }

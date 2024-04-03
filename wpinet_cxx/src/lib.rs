@@ -1,7 +1,7 @@
-#[cxx::bridge(namespace = "units")]
+#[cxx::bridge(namespace = "wpi")]
 mod ffi {
     unsafe extern "C++" {
-        include!("wpinet/headers/wpinet/DsClient.h");
+        include!("wpinet/DsClient.h");
 
         pub type DsClient;
     }

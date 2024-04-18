@@ -1,2 +1,18 @@
+# these tools need to be on the path to build for the RIO
+# WPILib 2024 installs them to:
+# - ~/wpilib/2024/roborio-academic/bin (linux and mac)
+# - C:/Users/Public/wpilib/2024/roborio-academic/bin (windows)
+
+[target.armv7-unknown-linux-gnueabi]
+linker = "arm-frc2024-linux-gnueabi-gcc"
+rustflags = [
+    "-C", "target-cpu=cortex-a9"
+]
+
+[env]
+CC_armv7_unknown_linux_gnueabi = "arm-frc2024-linux-gnueabi-gcc"
+CXX_armv7_unknown_linux_gnueabi = "arm-frc2024-linux-gnueabi-g++"
+AR_armv7_unknown_linux_gnueabi = "arm-frc2024-linux-gnueabi-ar"
+
 [alias]
 xtask = "run --package xtask --"

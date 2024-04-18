@@ -1,105 +1,105 @@
 //! # Pneumatics Control
 //!
-//! Support for CTRE's Pneumatics Control Module is contained in the [ctre] module, via the [CtrePcm](ctre::CtrePcm) type.
-//! Support for REV's Pneumatics Hub is contained in the [rev] module, via the [RevPh](rev::RevPh) type.
+//! This module defines common interfaces for access to pneumatic hardware.
+//! For concrete implementations, see vendor-specific submodules.
+//! - Support for CTRE's Pneumatics Control Module is contained in the [ctre] module, via the [CtrePcm](ctre::CtrePcm) type.
+//! - Support for REV's Pneumatics Hub is contained in the [rev] module, via the [RevPh](rev::RevPh) type.
 //!
-//! This module also provides controller-independent [Solenoid] and [DoubleSolenoid] types.
+//! Each concrete implementation provides a way to obtain types implementing [Solenoid] and [DoubleSolenoid].
+//! These can be used to actuate single- and double-ended solenoids, respectively.
+//! Similarly to [gpio pins] in many embedded crates, different types may be used for each solenoid channel.
+//! If needed, the channel and controller type can be erased into this module's
+//! [AnySolenoid] and [AnyDoubleSolenoid] types.
+//! Additionally, just the channel can be erased into a vendor-specific type that stores the channel at runtime.
+//!
+//! [gpio pins]: https://doc.rust-lang.org/stable/embedded-book/design-patterns/hal/gpio.html
 
 pub mod ctre;
 pub mod rev;
 
-pub trait PneumaticsController {
-    fn set_solenoids(&self, mask: u32, values: u32);
-    fn get_solenoids(&self) -> u32;
+/// A solenoid, which can be actuated in one direction or released.
+pub trait Solenoid {
+    /// Gets the state of the solenoid.
+    /// True indicates the solenoid is currently actuated, false indicates released.
+    fn get(&self) -> bool;
+
+    /// Sets the state of the solenoid.
+    /// True indicates to actuate the solenoid, false indicates to release.
+    fn set(&mut self, state: bool);
 }
 
-pub struct Solenoid<Channel> {
-    channel: Channel,
-}
-
-impl<Channel> Solenoid<Channel>
-where
-    Channel: MaskBasedChannel,
-{
-    pub fn new(channel: Channel) -> Self {
-        Self { channel }
-    }
-
-    pub fn set(&mut self, state: bool) {
-        self.channel
-            .get_controller()
-            .set_solenoids(Channel::MASK, if state { u32::MAX } else { 0 });
-    }
-
-    pub fn get(&self) -> bool {
-        self.channel.get_controller().get_solenoids() & Channel::MASK != 0
-    }
-
-    pub fn into_channel(self) -> Channel {
-        self.channel
-    }
-}
-
-pub struct DoubleSolenoid<ForwardChannel, BackwardChannel> {
-    forward_channel: ForwardChannel,
-    backward_channel: BackwardChannel,
-}
-
+/// Enumeration of all possible states for a [DoubleSolenoid].
 pub enum DoubleSolenoidState {
     Forward,
     Backward,
     Off,
 }
 
+/// Represents the state of a double solenoid actuated on both ends.
+/// This is invalid but possible, so this type is returned from [DoubleSolenoid::get] in this case.
 pub struct InvalidDoubleSolenoidState;
 
-impl<ForwardChannel, BackwardChannel> DoubleSolenoid<ForwardChannel, BackwardChannel>
-where
-    ForwardChannel: MaskBasedChannel,
-    BackwardChannel: MaskBasedChannel,
-{
-    const FORWARD_MASK: u32 = ForwardChannel::MASK;
-    const BACKWARD_MASK: u32 = BackwardChannel::MASK;
-    const TOTAL_MASK: u32 = Self::FORWARD_MASK | Self::BACKWARD_MASK;
+/// A double solenoid, which can be actuated in either direction or released.
+pub trait DoubleSolenoid {
+    /// Gets the state of the double solenoid. If the solenoid is actuated on both ends, [InvalidDoubleSolenoidState] is returned.
+    fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState>;
 
-    pub fn new(forward_channel: ForwardChannel, backward_channel: BackwardChannel) -> Self {
-        Self {
-            forward_channel,
-            backward_channel,
+    /// Sets the state of the double solenoid.
+    fn set(&mut self, state: DoubleSolenoidState);
+}
+
+enum GenericSolenoid<'a> {
+    Rev(rev::AnyRevSolenoid<'a>),
+    Ctre(ctre::AnyCtreSolenoid<'a>),
+}
+
+/// A wrapper around any kind of solenoid, storing all information needed for its operation
+/// (e.g. controller, channel) at runtime.
+pub struct AnySolenoid<'a> {
+    solenoid: GenericSolenoid<'a>,
+}
+
+impl<'a> Solenoid for AnySolenoid<'a> {
+    fn get(&self) -> bool {
+        match self.solenoid {
+            GenericSolenoid::Rev(ref s) => s.get(),
+            GenericSolenoid::Ctre(ref s) => s.get(),
         }
     }
 
-    pub fn set(&mut self, state: DoubleSolenoidState) {
-        let value = match state {
-            DoubleSolenoidState::Forward => Self::FORWARD_MASK,
-            DoubleSolenoidState::Backward => Self::BACKWARD_MASK,
-            DoubleSolenoidState::Off => 0,
-        };
-        self.forward_channel
-            .get_controller()
-            .set_solenoids(Self::TOTAL_MASK, value)
-    }
-
-    pub fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
-        let masked = self.forward_channel.get_controller().get_solenoids() & Self::TOTAL_MASK;
-        match masked {
-            _ if masked == Self::FORWARD_MASK => Ok(DoubleSolenoidState::Forward),
-            _ if masked == Self::BACKWARD_MASK => Ok(DoubleSolenoidState::Backward),
-            0 => Ok(DoubleSolenoidState::Off),
-            _ => Err(InvalidDoubleSolenoidState),
+    fn set(&mut self, state: bool) {
+        match self.solenoid {
+            GenericSolenoid::Rev(ref mut s) => s.set(state),
+            GenericSolenoid::Ctre(ref mut s) => s.set(state),
         }
-    }
-
-    pub fn into_channels(self) -> (ForwardChannel, BackwardChannel) {
-        (self.forward_channel, self.backward_channel)
     }
 }
 
-pub trait MaskBasedChannel {
-    const MASK: u32;
-    type Controller: PneumaticsController;
+enum GenericDoubleSolenoid<'a> {
+    Rev(rev::AnyRevDoubleSolenoid<'a>),
+    Ctre(ctre::AnyCtreDoubleSolenoid<'a>),
+}
 
-    fn get_controller(&self) -> &Self::Controller;
+/// A wrapper around any kind of double solenoid, storing all information needed for its operation
+/// (e.g. controller, channel) at runtime.
+pub struct AnyDoubleSolenoid<'a> {
+    solenoid: GenericDoubleSolenoid<'a>,
+}
+
+impl<'a> DoubleSolenoid for AnyDoubleSolenoid<'a> {
+    fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
+        match self.solenoid {
+            GenericDoubleSolenoid::Rev(ref s) => s.get(),
+            GenericDoubleSolenoid::Ctre(ref s) => s.get(),
+        }
+    }
+
+    fn set(&mut self, state: DoubleSolenoidState) {
+        match self.solenoid {
+            GenericDoubleSolenoid::Rev(ref mut s) => s.set(state),
+            GenericDoubleSolenoid::Ctre(ref mut s) => s.set(state),
+        }
+    }
 }
 
 pub trait Compressor {

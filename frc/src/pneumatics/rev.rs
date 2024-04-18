@@ -1,6 +1,7 @@
-use std::ffi::CStr;
-
-use super::{Compressor, PneumaticsController};
+use super::{
+    AnyDoubleSolenoid, AnySolenoid, Compressor, DoubleSolenoid, DoubleSolenoidState,
+    GenericDoubleSolenoid, GenericSolenoid, InvalidDoubleSolenoidState, Solenoid,
+};
 
 pub struct RevPh {
     handle: wpihal_sys::HAL_REVPHHandle,
@@ -12,7 +13,7 @@ impl RevPh {
             wpihal_sys::panic_on_hal_error(|status| {
                 wpihal_sys::HAL_InitializeREVPH(
                     can_id,
-                    CStr::from_bytes_with_nul(b"\0").unwrap().as_ptr(),
+                    c"".as_ptr(),
                     status,
                 )
             })
@@ -43,9 +44,7 @@ impl RevPh {
             },
         )
     }
-}
 
-impl PneumaticsController for RevPh {
     fn get_solenoids(&self) -> u32 {
         let solenoids = unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -98,17 +97,21 @@ impl<'a> Compressor for RevCompressor<'a> {
     }
 }
 
+pub trait RevChannel {
+    const MASK: u32;
+    fn get_controller(&self) -> &RevPh;
+}
+
 macro_rules! rev_channel {
     ($name:ident, $num:expr) => {
         pub struct $name<'a> {
             ph: &'a RevPh,
         }
 
-        impl<'a> super::MaskBasedChannel for $name<'a> {
+        impl<'a> RevChannel for $name<'a> {
             const MASK: u32 = 1 << $num;
-            type Controller = RevPh;
 
-            fn get_controller(&self) -> &Self::Controller {
+            fn get_controller(&self) -> &RevPh {
                 self.ph
             }
         }
@@ -149,4 +152,154 @@ pub struct RevPneumatics<'a> {
     pub channel13: RevChannel13<'a>,
     pub channel14: RevChannel14<'a>,
     pub channel15: RevChannel15<'a>,
+}
+
+pub struct RevSolenoid<C: RevChannel> {
+    channel: C,
+}
+
+impl<Channel: RevChannel> RevSolenoid<Channel> {
+    pub fn new(channel: Channel) -> Self {
+        Self { channel }
+    }
+
+    pub fn into_channel(self) -> Channel {
+        self.channel
+    }
+
+    pub fn erase_channel(&mut self) -> AnyRevSolenoid<'_> {
+        AnyRevSolenoid {
+            ph: self.channel.get_controller(),
+            mask: Channel::MASK,
+        }
+    }
+
+    pub fn erase_all(&mut self) -> AnySolenoid<'_> {
+        AnySolenoid {
+            solenoid: GenericSolenoid::Rev(self.erase_channel()),
+        }
+    }
+}
+
+impl<Channel: RevChannel> Solenoid for RevSolenoid<Channel> {
+    fn get(&self) -> bool {
+        self.channel.get_controller().get_solenoids() & Channel::MASK != 0
+    }
+
+    fn set(&mut self, state: bool) {
+        self.channel
+            .get_controller()
+            .set_solenoids(Channel::MASK, if state { u32::MAX } else { 0 });
+    }
+}
+
+pub struct RevDoubleSolenoid<ForwardChannel: RevChannel, BackwardChannel: RevChannel> {
+    forward_channel: ForwardChannel,
+    backward_channel: BackwardChannel,
+}
+
+impl<ForwardChannel: RevChannel, BackwardChannel: RevChannel>
+    RevDoubleSolenoid<ForwardChannel, BackwardChannel>
+{
+    const FORWARD_MASK: u32 = ForwardChannel::MASK;
+    const BACKWARD_MASK: u32 = BackwardChannel::MASK;
+    const BOTH_MASK: u32 = ForwardChannel::MASK | BackwardChannel::MASK;
+
+    pub fn new(forward_channel: ForwardChannel, backward_channel: BackwardChannel) -> Self {
+        assert!(std::ptr::eq(
+            forward_channel.get_controller(),
+            backward_channel.get_controller()
+        ));
+        Self {
+            forward_channel,
+            backward_channel,
+        }
+    }
+
+    pub fn into_channels(self) -> (ForwardChannel, BackwardChannel) {
+        (self.forward_channel, self.backward_channel)
+    }
+
+    pub fn erase_channel(&mut self) -> AnyRevDoubleSolenoid<'_> {
+        AnyRevDoubleSolenoid {
+            ph: self.forward_channel.get_controller(),
+            forward_mask: ForwardChannel::MASK,
+            backward_mask: BackwardChannel::MASK,
+        }
+    }
+
+    pub fn erase_all(&mut self) -> AnyDoubleSolenoid<'_> {
+        AnyDoubleSolenoid {
+            solenoid: GenericDoubleSolenoid::Rev(self.erase_channel()),
+        }
+    }
+}
+
+impl<ForwardChannel: RevChannel, BackwardChannel: RevChannel> DoubleSolenoid
+    for RevDoubleSolenoid<ForwardChannel, BackwardChannel>
+{
+    fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
+        let masked = self.forward_channel.get_controller().get_solenoids() & Self::BOTH_MASK;
+        match masked {
+            _ if masked == Self::FORWARD_MASK => Ok(DoubleSolenoidState::Forward),
+            _ if masked == Self::BACKWARD_MASK => Ok(DoubleSolenoidState::Backward),
+            0 => Ok(DoubleSolenoidState::Off),
+            _ => Err(InvalidDoubleSolenoidState),
+        }
+    }
+
+    fn set(&mut self, state: DoubleSolenoidState) {
+        let value = match state {
+            DoubleSolenoidState::Forward => Self::FORWARD_MASK,
+            DoubleSolenoidState::Backward => Self::BACKWARD_MASK,
+            DoubleSolenoidState::Off => 0,
+        };
+        self.forward_channel
+            .get_controller()
+            .set_solenoids(Self::BOTH_MASK, value)
+    }
+}
+
+pub struct AnyRevSolenoid<'a> {
+    ph: &'a RevPh,
+    mask: u32,
+}
+
+impl<'a> Solenoid for AnyRevSolenoid<'a> {
+    fn get(&self) -> bool {
+        self.ph.get_solenoids() & self.mask != 0
+    }
+
+    fn set(&mut self, state: bool) {
+        self.ph
+            .set_solenoids(self.mask, if state { u32::MAX } else { 0 });
+    }
+}
+
+pub struct AnyRevDoubleSolenoid<'a> {
+    ph: &'a RevPh,
+    forward_mask: u32,
+    backward_mask: u32,
+}
+
+impl<'a> DoubleSolenoid for AnyRevDoubleSolenoid<'a> {
+    fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
+        let masked = self.ph.get_solenoids() & (self.forward_mask | self.backward_mask);
+        match masked {
+            _ if masked == self.forward_mask => Ok(DoubleSolenoidState::Forward),
+            _ if masked == self.backward_mask => Ok(DoubleSolenoidState::Backward),
+            0 => Ok(DoubleSolenoidState::Off),
+            _ => Err(InvalidDoubleSolenoidState),
+        }
+    }
+
+    fn set(&mut self, state: DoubleSolenoidState) {
+        let value = match state {
+            DoubleSolenoidState::Forward => self.forward_mask,
+            DoubleSolenoidState::Backward => self.backward_mask,
+            DoubleSolenoidState::Off => 0,
+        };
+        self.ph
+            .set_solenoids(self.forward_mask | self.backward_mask, value)
+    }
 }

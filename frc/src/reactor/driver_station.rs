@@ -100,16 +100,19 @@ pub struct ControllerState {
 
 impl ControllerState {
     /// Gets the value of a controller axis, or None if no such axis exists.
+    #[must_use]
     pub fn axis(&self, n: u8) -> Option<f32> {
         self.axes.get(n)
     }
 
     /// Gets the value of a controller POV (D-pad), or None if no such POV exists.
+    #[must_use]
     pub fn pov(&self, n: u8) -> Option<i16> {
         self.povs.get(n)
     }
 
     /// Gets the value of a controller button, or None if no such button exists.
+    #[must_use]
     pub fn button(&self, n: u8) -> Option<bool> {
         self.buttons.get(n)
     }
@@ -121,6 +124,7 @@ pub struct DriverStation {
 }
 
 impl DriverStation {
+    #[must_use]
     pub fn new() -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
         let shutdown2 = Arc::clone(&shutdown);
@@ -145,11 +149,12 @@ impl DriverStation {
     /// Waits until a new packet is received from the Driver Station.
     /// This signifies that updated Driver Station data, such as robot and controller state, is available.
     pub async fn wait_for_packet(&self) {
-        self.new_packet.notified().await
+        self.new_packet.notified().await;
     }
 
     /// Gets the most recently reported state of the controller on a given port, if any is plugged in.
     /// Returns None if no controller exists on the given port.
+    #[must_use]
     pub fn get_controller_state(&self, port: u8) -> Option<ControllerState> {
         let axes = unsafe {
             let mut axes = MaybeUninit::uninit();
@@ -183,6 +188,7 @@ impl DriverStation {
     }
 
     /// Gets the most recently reported robot mode.
+    #[must_use]
     pub fn get_robot_mode() -> RobotMode {
         // SAFETY: safe because HAL_GetControlWord is guaranteed to initialize control_word
         let control_word = unsafe {
@@ -224,8 +230,8 @@ impl DsEvent {
     fn new(manual_reset: bool, initial_state: bool) -> Self {
         let handle = unsafe {
             wpihal_sys::wpiutil_sys::WPI_CreateEvent(
-                if manual_reset { 1 } else { 0 },
-                if initial_state { 1 } else { 0 },
+                i32::from(manual_reset),
+                i32::from(initial_state),
             )
         };
         unsafe {

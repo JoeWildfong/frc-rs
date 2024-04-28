@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 fn unwrap_all_glob(pattern: &str) -> impl Iterator<Item = PathBuf> {
-    glob::glob(pattern).unwrap().map(|path| path.unwrap())
+    glob::glob(pattern).unwrap().map(Result::unwrap)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

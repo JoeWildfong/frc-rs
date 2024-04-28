@@ -5,6 +5,7 @@ pub struct RevPh {
 }
 
 impl RevPh {
+    #[must_use]
     pub fn new(can_id: i32) -> Self {
         let handle = unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -14,6 +15,7 @@ impl RevPh {
         Self { handle }
     }
 
+    #[must_use]
     pub fn as_parts(&mut self) -> (RevCompressor<'_>, RevPneumatics<'_>) {
         (
             RevCompressor { ph: self },
@@ -46,12 +48,16 @@ impl SolenoidController for RevPh {
                 wpihal_sys::HAL_GetREVPHSolenoids(self.handle, status)
             })
         };
-        solenoids as u32
+        #[allow(clippy::cast_sign_loss)]
+        {
+            solenoids as u32
+        }
     }
 
     fn set_solenoid_bitset(&self, mask: u32, values: u32) {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
+                #[allow(clippy::cast_possible_wrap)]
                 wpihal_sys::HAL_SetREVPHSolenoids(self.handle, mask as i32, values as i32, status);
             });
         };

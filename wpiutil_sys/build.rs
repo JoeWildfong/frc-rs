@@ -1,7 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut build = cc::Build::new();
     build
-        .files(glob::glob("wpiutil/sources/**/*.cpp")?.map(|a| a.unwrap()))
+        .files(glob::glob("wpiutil/sources/**/*.cpp")?.map(Result::unwrap))
         .cpp(true)
         .warnings(false)
         .flag_if_supported("-w") // clang, gcc

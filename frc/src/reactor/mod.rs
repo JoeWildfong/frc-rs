@@ -39,10 +39,11 @@ pub struct IrqReactor {
 }
 
 impl IrqReactor {
+    #[must_use]
     pub fn new() -> Self {
         let shutdown = Arc::new(AtomicBool::new(false));
         let shutdown_inner = Arc::clone(&shutdown);
-        let wakers: Arc<Mutex<WakerArray<8>>> = Default::default();
+        let wakers: Arc<Mutex<WakerArray<8>>> = Arc::default();
         let wakers_inner = Arc::clone(&wakers);
 
         std::thread::spawn(move || {

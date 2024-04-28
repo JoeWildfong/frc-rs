@@ -1,8 +1,8 @@
 use frc::{
     pneumatics::{
-        ctre::{CtreDoubleSolenoid, CtrePcm, CtrePneumatics},
-        rev::{RevDoubleSolenoid, RevPh, RevPneumatics},
-        DoubleSolenoid, DoubleSolenoidState
+        ctre_pcm::{CtrePcm, CtrePneumatics},
+        rev_ph::{RevPh, RevPneumatics},
+        TypedDoubleSolenoid, DoubleSolenoid, DoubleSolenoidState
     },
     reactor::driver_station::DriverStation,
 };
@@ -31,9 +31,9 @@ async fn main() {
         }
     ) = rev_pneumatics.as_parts();
 
-    let mut ctre_double_solenoid = CtreDoubleSolenoid::new(ctre0, ctre1);
-    let mut ctre_double_solenoid2 = CtreDoubleSolenoid::new(ctre2, ctre3);
-    let mut rev_double_solenoid = RevDoubleSolenoid::new(rev0, rev1);
+    let ctre_double_solenoid = TypedDoubleSolenoid::new(ctre0, ctre1);
+    let ctre_double_solenoid2 = TypedDoubleSolenoid::new(ctre2, ctre3);
+    let rev_double_solenoid = TypedDoubleSolenoid::new(rev0, rev1);
     let mut double_solenoid_array = [ctre_double_solenoid.erase_all(), ctre_double_solenoid2.erase_all(), rev_double_solenoid.erase_all()];
 
     let ds = DriverStation::new();

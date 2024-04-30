@@ -1,4 +1,7 @@
-use super::{Compressor, SolenoidChannel, SolenoidController};
+use uom::si::f64::{ElectricCurrent, ElectricPotential, Pressure};
+use wpihal_sys::HAL_REVPHCompressorConfigType;
+
+use super::{AnalogCompressor, Compressor, DigitalCompressor, HybridCompressor, SolenoidChannel, SolenoidController};
 
 pub struct RevPh {
     handle: wpihal_sys::HAL_REVPHHandle,
@@ -76,12 +79,71 @@ impl Drop for RevPh {
     }
 }
 
+#[repr(i32)]
+#[derive(PartialEq, Eq)]
+pub enum RevCompressorMode {
+    /// Compressor is always off
+    Disabled = wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kDisabled,
+    /// Compressor runs when the connected digital pressure switch is not activated by high pressure
+    Digital = wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kDigital,
+    /// Compressor runs when the connected analog pressure sensor reports a value in a specified range
+    Analog = wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kAnalog,
+    /// Compressor runs when the requirements under the `Digital` and `Analog` modes are both met
+    Hybrid = wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kHybrid
+}
+
+impl TryFrom<HAL_REVPHCompressorConfigType> for  RevCompressorMode {
+    type Error = ();
+    fn try_from(value: HAL_REVPHCompressorConfigType) -> Result<Self, Self::Error> {
+        match value {
+            wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kDisabled => Ok(RevCompressorMode::Disabled),
+            wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kDigital => Ok(RevCompressorMode::Digital),
+            wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kAnalog => Ok(RevCompressorMode::Analog),
+            wpihal_sys::HAL_REVPHCompressorConfigType_HAL_REVPHCompressorConfigType_kHybrid => Ok(RevCompressorMode::Hybrid),
+            _ => Err(())
+        }
+    }
+}
+
 pub struct RevCompressor<'a> {
     ph: &'a RevPh,
 }
 
+impl<'a> RevCompressor<'a> {
+    /// Implementes formula from the REV Analog Pressure Sensor datasheet
+    /// to convert voltage readings to pressure.
+    fn voltage_to_pressure(v_out: ElectricPotential, v_cc: ElectricPotential) -> Pressure {
+        // datasheet found at https://www.revrobotics.com/content/docs/REV-11-1107-DS.pdf
+        use uom::si::{electric_potential::volt, pressure::psi};
+        let p = 250.0 * (v_out.get::<volt>() / v_cc.get::<volt>()) - 25.0;
+        Pressure::new::<psi>(p)
+    }
+
+    /// Implementes formula from the REV Analog Pressure Sensor datasheet
+    // to convert pressure and source voltage to expected output voltage
+    fn pressure_to_voltage(pressure: Pressure, v_cc: ElectricPotential) -> ElectricPotential {
+        // datasheet found at https://www.revrobotics.com/content/docs/REV-11-1107-DS.pdf
+        use uom::si::{pressure::psi, electric_potential::volt};
+        let v_out = v_cc.get::<volt>() * (0.004 * pressure.get::<psi>() + 0.1);
+        ElectricPotential::new::<volt>(v_out)
+    }
+
+    /// Gets the compressor's currently configured mode of operation
+    /// # Panics
+    /// Panics if the firmware returns an invalid mode of operation
+    #[must_use]
+    pub fn mode(&self) -> RevCompressorMode {
+        let config = unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetREVPHCompressorConfig(self.ph.handle, status)
+            })
+        };
+        RevCompressorMode::try_from(config).unwrap()
+    }
+}
+
 impl<'a> Compressor for RevCompressor<'a> {
-    fn get_enabled(&self) -> bool {
+    fn running(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
                 wpihal_sys::HAL_GetREVPHCompressor(self.ph.handle, status)
@@ -89,12 +151,95 @@ impl<'a> Compressor for RevCompressor<'a> {
         }
     }
 
+    fn current_draw(&self) -> ElectricCurrent {
+        let amps = unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetREVPHCompressorCurrent(self.ph.handle, status)
+            })
+        };
+        ElectricCurrent::new::<uom::si::electric_current::ampere>(amps)
+    }
+
+    fn disable(&mut self) {
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetREVPHClosedLoopControlDisabled(self.ph.handle, status);
+            });
+        }
+    }
+}
+
+impl<'a> DigitalCompressor for RevCompressor<'a> {
     fn get_pressure_switch(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
                 wpihal_sys::HAL_GetREVPHPressureSwitch(self.ph.handle, status)
             }) != 0
         }
+    }
+
+    fn enable_digital(&mut self) {
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetREVPHClosedLoopControlDigital(self.ph.handle, status);
+            });
+        }
+    }
+
+    fn in_digital_mode(&self) -> bool {
+        self.mode() == RevCompressorMode::Digital
+    }
+}
+
+impl<'a> AnalogCompressor for RevCompressor<'a> {
+    fn pressure(&self) -> Pressure {
+        use uom::si::electric_potential::volt;
+        // calculate the pressure in psi per the REV Analog Pressure Sensor datasheet
+        // datasheet found at https://www.revrobotics.com/content/docs/REV-11-1107-DS.pdf
+        // the datasheet doesn't say it's in psi, it's assumed from wpihal's implementation
+        let v_out = unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetREVPHAnalogVoltage(self.ph.handle, 0, status)
+            })
+        };
+        let v_cc = unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetREVPH5VVoltage(self.ph.handle, status)
+            })
+        };
+        Self::voltage_to_pressure(ElectricPotential::new::<volt>(v_out), ElectricPotential::new::<volt>(v_cc))
+    }
+
+    fn enable_analog(&mut self, min_pressure: Pressure, max_pressure: Pressure) {
+        use uom::si::electric_potential::volt;
+        let min_voltage = Self::pressure_to_voltage(min_pressure, ElectricPotential::new::<volt>(5.0));
+        let max_voltage = Self::pressure_to_voltage(max_pressure, ElectricPotential::new::<volt>(5.0));
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetREVPHClosedLoopControlAnalog(self.ph.handle, min_voltage.get::<volt>(), max_voltage.get::<volt>(), status);
+            });
+        }
+    }
+
+    fn in_analog_mode(&self) -> bool {
+        self.mode() == RevCompressorMode::Analog
+    }
+}
+
+impl<'a> HybridCompressor for RevCompressor<'a> {
+    fn enable_hybrid(&mut self, min_pressure: Pressure, max_pressure: Pressure) {
+        use uom::si::electric_potential::volt;
+        let min_voltage = Self::pressure_to_voltage(min_pressure, ElectricPotential::new::<volt>(5.0));
+        let max_voltage = Self::pressure_to_voltage(max_pressure, ElectricPotential::new::<volt>(5.0));
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetREVPHClosedLoopControlHybrid(self.ph.handle, min_voltage.get::<volt>(), max_voltage.get::<volt>(), status);
+            });
+        }
+    }
+
+    fn in_hybrid_mode(&self) -> bool {
+        self.mode() == RevCompressorMode::Hybrid
     }
 }
 

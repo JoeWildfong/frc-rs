@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.35.1", features = ["sync"] }
+uom = "0.36.0"
 wpihal_sys = { path = "../wpihal_sys" }

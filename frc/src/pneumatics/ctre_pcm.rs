@@ -1,4 +1,4 @@
-use super::{Compressor, SolenoidChannel, SolenoidController};
+use super::{Compressor, DigitalCompressor, SolenoidChannel, SolenoidController};
 
 pub struct CtrePcm {
     handle: wpihal_sys::HAL_CTREPCMHandle,
@@ -78,7 +78,7 @@ pub struct CtreCompressor<'a> {
 }
 
 impl<'a> Compressor for CtreCompressor<'a> {
-    fn get_enabled(&self) -> bool {
+    fn running(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
                 wpihal_sys::HAL_GetCTREPCMCompressor(self.pcm.handle, status)
@@ -86,10 +86,45 @@ impl<'a> Compressor for CtreCompressor<'a> {
         }
     }
 
+    fn current_draw(&self) -> uom::si::f64::ElectricCurrent {
+        let amps = unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetCTREPCMCompressorCurrent(self.pcm.handle, status)
+            })
+        };
+        uom::si::f64::ElectricCurrent::new::<uom::si::electric_current::ampere>(amps)
+    }
+
+    fn disable(&mut self) {
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetCTREPCMClosedLoopControl(self.pcm.handle, 0, status);
+            });
+        }
+    }
+}
+
+impl<'a> DigitalCompressor for CtreCompressor<'a> {
     fn get_pressure_switch(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
                 wpihal_sys::HAL_GetCTREPCMPressureSwitch(self.pcm.handle, status)
+            }) != 0
+        }
+    }
+
+    fn enable_digital(&mut self) {
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_SetCTREPCMClosedLoopControl(self.pcm.handle, 1, status);
+            });
+        }
+    }
+
+    fn in_digital_mode(&self) -> bool {
+        unsafe {
+            wpihal_sys::panic_on_hal_error(|status| {
+                wpihal_sys::HAL_GetCTREPCMClosedLoopControl(self.pcm.handle, status)
             }) != 0
         }
     }

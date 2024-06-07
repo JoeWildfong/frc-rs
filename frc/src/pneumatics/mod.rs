@@ -8,7 +8,7 @@
 //! Each concrete implementation provides a way to obtain solenoid channels implementing [`SolenoidChannel`].
 //! These can be used to create single- and double-ended solenoids, types for which are provided in this module.
 //! The basic version of each is [`TypedSolenoid`] and [`TypedDoubleSolenoid`].
-//! 
+//!
 //! Similarly to [GPIO pins] in many embedded crates, a different type may be provided for each solenoid channel.
 //! If needed, this channel information can be erased in a [`ChannelErasedSolenoid`] or [`ChannelErasedDoubleSolenoid`],
 //! e.g. for homogeneous storage of several solenoids in a slice or array.

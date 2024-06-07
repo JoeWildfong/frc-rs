@@ -1,6 +1,6 @@
 use std::{env, error::Error, sync::OnceLock};
 
-pub(crate) use cargo_metadata::camino as camino;
+pub(crate) use cargo_metadata::camino;
 
 use camino::{Utf8Path, Utf8PathBuf};
 

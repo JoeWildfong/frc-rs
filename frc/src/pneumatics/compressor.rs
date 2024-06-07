@@ -21,7 +21,7 @@ pub trait Compressor {
 }
 
 /// For compressors with a connected digital pressure switch and digital operation mode.
-/// 
+///
 /// The pressure switch is externally configured to a target pressure and can
 /// report whether or not the actual pressure exceeds the specified pressure.
 /// When the compressor is in digital mode, it will run only when the pressure switch
@@ -44,7 +44,7 @@ pub trait DigitalCompressor: Compressor {
 }
 
 /// For compressors with a connected analog pressure sensor and analog operation mode.
-/// 
+///
 /// The pressure sensor can report the current pressure, and a pressure range can
 /// be given to the compressor. The compressor will run when the pressure, as
 /// reported by the sensor, is within the specified range.
@@ -64,7 +64,7 @@ pub trait AnalogCompressor: Compressor {
 
 /// For compressors with both a digital pressure switch and analog pressure sensor,
 /// and a hybrid operation mode.
-/// 
+///
 /// The compressor will run when the pressure is within the specified range, and
 /// below the digital switch's externally configured target pressure.
 pub trait HybridCompressor: DigitalCompressor + AnalogCompressor {

@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use embedded_hal_async::digital::Wait;
 use frc::{
     dio::DioPort,
@@ -10,9 +12,11 @@ use frc::{
     reactor::driver_station::DriverStation,
 };
 
+static DS: OnceLock<DriverStation> = OnceLock::new();
+
 #[tokio::main]
 async fn main() {
-    let mut ctre_pneumatics = CtrePcm::default();
+    let ctre_pneumatics = CtrePcm::default();
     let (
         _ctre_compressor,
         CtrePneumatics {
@@ -22,9 +26,9 @@ async fn main() {
             channel3: ctre3,
             ..
         },
-    ) = ctre_pneumatics.as_parts();
+    ) = ctre_pneumatics.into_parts();
 
-    let mut rev_pneumatics = RevPh::default();
+    let rev_pneumatics = RevPh::default();
     let (
         _rev_compressor,
         RevPneumatics {
@@ -33,24 +37,26 @@ async fn main() {
             channel2: rev2,
             ..
         },
-    ) = rev_pneumatics.as_parts();
+    ) = rev_pneumatics.into_parts();
 
     let ctre_double_solenoid = TypedDoubleSolenoid::new(ctre0, ctre1);
     let ctre_double_solenoid2 = TypedDoubleSolenoid::new(ctre2, ctre3);
     let rev_double_solenoid = TypedDoubleSolenoid::new(rev0, rev1);
-    let mut double_solenoid_array = [
+    let double_solenoid_array = [
         ctre_double_solenoid.erase_all(),
         ctre_double_solenoid2.erase_all(),
         rev_double_solenoid.erase_all(),
     ];
 
-    let ds = DriverStation::new();
+    let ds = DS.get_or_init(DriverStation::new);
     let DioPort { dio1, .. } = DioPort::take().unwrap();
 
-    tokio::join!(
-        fire_solenoids_on_button(&ds, &mut double_solenoid_array),
-        tie_solenoid_to_limit_switch(TypedSolenoid::new(rev2), dio1.into_input())
-    );
+    tokio::spawn(tie_solenoid_to_limit_switch(
+        TypedSolenoid::new(rev2),
+        dio1.into_input(),
+    ));
+    tokio::spawn(fire_solenoids_on_button(ds, double_solenoid_array));
+    std::future::pending::<()>().await;
 }
 
 async fn tie_solenoid_to_limit_switch(mut solenoid: impl Solenoid, mut limit_pin: impl Wait) {
@@ -62,7 +68,10 @@ async fn tie_solenoid_to_limit_switch(mut solenoid: impl Solenoid, mut limit_pin
     }
 }
 
-async fn fire_solenoids_on_button(ds: &DriverStation, solenoids: &mut [AnyDoubleSolenoid<'_>]) {
+async fn fire_solenoids_on_button<const N: usize>(
+    ds: &'static DriverStation,
+    mut solenoids: [AnyDoubleSolenoid; N],
+) {
     loop {
         if let Some(controller_state) = ds.get_controller_state(0) {
             for (i, solenoid) in solenoids.iter_mut().enumerate() {

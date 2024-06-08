@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use std::marker::PhantomData;
+use std::{marker::PhantomData, sync::Arc};
 
 /// Common functionality between solenoid controllers.
 /// Assumes that solenoid states are represented as a bitset, with each bit storing
@@ -16,7 +16,7 @@ pub trait SolenoidController {
     /// ```rust, no_run
     /// controller.set_solenoid_bitset(u32::MAX, 0);
     /// assert_eq!(controller.get_solenoid_bitset(), 0);
-    /// controller.set_solenoid_bitset(0xF000), u32::MAX);
+    /// controller.set_solenoid_bitset(0xF000, u32::MAX);
     /// assert_eq!(controller.get_solenoid_bitset(), 0xF000);
     /// controller.set_solenoid_bitset(0x00FF, 0x0F0F);
     /// assert_eq!(controller.get_solenoid_bitset(), 0xF00F);
@@ -72,24 +72,24 @@ pub trait SolenoidController {
 /// independently by the controller. This trait allows each channel to be used
 /// essentially as a reference to its controller, but with a type-level constant
 /// for the channel number.
-pub trait SolenoidChannel<'a> {
+pub trait SolenoidChannel {
     /// The channel number for this channel
     const CHANNEL: u32;
 
     /// The type of the controller that controls this channel
-    type Controller: SolenoidController + 'a;
+    type Controller: SolenoidController;
 
-    /// Gets a reference to this channel's controller
+    /// Gets a counted reference to this channel's controller
     #[must_use]
-    fn get_controller(&self) -> &'a Self::Controller;
+    fn into_controller(self) -> Arc<Self::Controller>;
 
-    /// Creates a new channel from a controller reference
+    /// Creates a new channel from a controller
     /// # Safety
     /// Must not be called while another channel with the same channel number and
     /// controller exists. This would cause two objects to control the same
     /// pneumatic channel, violating assumptions about aliasing.
     #[must_use]
-    unsafe fn new(controller: &'a Self::Controller) -> Self;
+    unsafe fn new(controller: Arc<Self::Controller>) -> Self;
 }
 
 /// A solenoid, which can be actuated in one direction or released.
@@ -143,17 +143,17 @@ pub trait DoubleSolenoid {
 /// To type-erase some of this information and store it at runtime, use
 /// [`TypedSolenoid::erase_channel`] to type-erase the channel
 /// or [`TypedSolenoid::erase_all`] to type-erase the channel and controller.
-pub struct TypedSolenoid<'a, Channel: SolenoidChannel<'a>> {
-    controller: &'a Channel::Controller,
+pub struct TypedSolenoid<Channel: SolenoidChannel> {
+    controller: Arc<Channel::Controller>,
 }
 
-impl<'a, Channel: SolenoidChannel<'a> + 'a> TypedSolenoid<'a, Channel> {
+impl<Channel: SolenoidChannel> TypedSolenoid<Channel> {
     /// Creates a [`TypedSolenoid`] from a channel.
     #[allow(clippy::needless_pass_by_value)]
     #[must_use]
     pub fn new(channel: Channel) -> Self {
         Self {
-            controller: channel.get_controller(),
+            controller: channel.into_controller(),
         }
     }
 
@@ -167,7 +167,7 @@ impl<'a, Channel: SolenoidChannel<'a> + 'a> TypedSolenoid<'a, Channel> {
 
     /// Type-erases the channel used by this solenoid, storing it at runtime.
     #[must_use]
-    pub fn erase_channel(self) -> ChannelErasedSolenoid<'a, Channel::Controller> {
+    pub fn erase_channel(self) -> ChannelErasedSolenoid<Channel::Controller> {
         ChannelErasedSolenoid {
             controller: self.controller,
             channel: Channel::CHANNEL,
@@ -176,7 +176,10 @@ impl<'a, Channel: SolenoidChannel<'a> + 'a> TypedSolenoid<'a, Channel> {
 
     /// Type-erases the channel and controller used by this solenoid, storing both at runtime.
     #[must_use]
-    pub fn erase_all(self) -> AnySolenoid<'a> {
+    pub fn erase_all(self) -> AnySolenoid
+    where
+        Channel::Controller: Send + Sync + 'static
+    {
         AnySolenoid {
             controller: self.controller,
             channel: Channel::CHANNEL,
@@ -184,7 +187,7 @@ impl<'a, Channel: SolenoidChannel<'a> + 'a> TypedSolenoid<'a, Channel> {
     }
 }
 
-impl<'a, Channel: SolenoidChannel<'a> + 'a> Solenoid for TypedSolenoid<'a, Channel> {
+impl<Channel: SolenoidChannel> Solenoid for TypedSolenoid<Channel> {
     fn get(&self) -> bool {
         self.controller.get_solenoid(Channel::CHANNEL)
     }
@@ -199,16 +202,16 @@ impl<'a, Channel: SolenoidChannel<'a> + 'a> Solenoid for TypedSolenoid<'a, Chann
 /// Useful to store several solenoids from the same controller homogeneously, e.g.
 /// in a slice or array. For a fully type-erased solenoid, see [`AnySolenoid`].
 /// For a fully typed solenoid, see [`TypedSolenoid`].
-pub struct ChannelErasedSolenoid<'a, Controller> {
-    controller: &'a Controller,
+pub struct ChannelErasedSolenoid<Controller> {
+    controller: Arc<Controller>,
     channel: u32,
 }
 
-impl<'a, Controller: SolenoidController> ChannelErasedSolenoid<'a, Controller> {
+impl<Controller: SolenoidController + Send + Sync + 'static> ChannelErasedSolenoid<Controller> {
     /// Type-erases the controller used by this solenoid, storing it at runtime
     /// in addition to the channel already stored at runtime by this type.
     #[must_use]
-    pub fn erase_all(self) -> AnySolenoid<'a> {
+    pub fn erase_all(self) -> AnySolenoid {
         AnySolenoid {
             controller: self.controller,
             channel: self.channel,
@@ -216,7 +219,7 @@ impl<'a, Controller: SolenoidController> ChannelErasedSolenoid<'a, Controller> {
     }
 }
 
-impl<'a, Controller: SolenoidController> Solenoid for ChannelErasedSolenoid<'a, Controller> {
+impl<Controller: SolenoidController> Solenoid for ChannelErasedSolenoid<Controller> {
     fn get(&self) -> bool {
         self.controller.get_solenoid(self.channel)
     }
@@ -232,12 +235,12 @@ impl<'a, Controller: SolenoidController> Solenoid for ChannelErasedSolenoid<'a, 
 /// solenoid homogeneously, e.g. in a slice or array. For a solenoid with
 /// channels type-erased but not controller type, see [`ChannelErasedSolenoid`].
 /// For a fully-typed solenoid, see [`TypedSolenoid`].
-pub struct AnySolenoid<'a> {
-    controller: &'a dyn SolenoidController,
+pub struct AnySolenoid {
+    controller: Arc<dyn SolenoidController + Send + Sync + 'static>,
     channel: u32,
 }
 
-impl<'a> Solenoid for AnySolenoid<'a> {
+impl Solenoid for AnySolenoid {
     fn get(&self) -> bool {
         self.controller.get_solenoid(self.channel)
     }
@@ -255,17 +258,17 @@ impl<'a> Solenoid for AnySolenoid<'a> {
 /// To type-erase some of this information and store it at runtime, use
 /// [`TypedDoubleSolenoid::erase_channels`] to type-erase the channels
 /// or [`TypedDoubleSolenoid::erase_all`] to type-erase the channels and controller.
-pub struct TypedDoubleSolenoid<'a, Controller, ForwardChannel, BackwardChannel> {
-    controller: &'a Controller,
+pub struct TypedDoubleSolenoid<Controller, ForwardChannel, BackwardChannel> {
+    controller: Arc<Controller>,
     _phantom: PhantomData<(ForwardChannel, BackwardChannel)>,
 }
 
-impl<'a, Controller, ForwardChannel, BackwardChannel>
-    TypedDoubleSolenoid<'a, Controller, ForwardChannel, BackwardChannel>
+impl<Controller, ForwardChannel, BackwardChannel>
+    TypedDoubleSolenoid<Controller, ForwardChannel, BackwardChannel>
 where
     Controller: SolenoidController,
-    ForwardChannel: SolenoidChannel<'a, Controller = Controller> + 'a,
-    BackwardChannel: SolenoidChannel<'a, Controller = Controller> + 'a,
+    ForwardChannel: SolenoidChannel<Controller = Controller>,
+    BackwardChannel: SolenoidChannel<Controller = Controller>,
 {
     /// Creates a new [`TypedDoubleSolenoid`] from two solenoid channels. These channels
     /// must have the same controller. The type system enforces that both have the
@@ -290,12 +293,10 @@ where
         // We enforce that both channels of a double solenoid have the same controller.
         // If the channels are controlled by different controllers, we can't set
         // the double solenoid state in one write, potentially causing timing issues.
-        assert!(std::ptr::eq(
-            forward_channel.get_controller(),
-            backward_channel.get_controller()
-        ));
+        let controller = forward_channel.into_controller();
+        assert!(Arc::ptr_eq(&controller, &backward_channel.into_controller()));
         Self {
-            controller: forward_channel.get_controller(),
+            controller,
             _phantom: PhantomData,
         }
     }
@@ -307,7 +308,7 @@ where
         // No other object can safely alias these channels, so they are safe to re-materialize.
         unsafe {
             (
-                ForwardChannel::new(self.controller),
+                ForwardChannel::new(Arc::clone(&self.controller)),
                 BackwardChannel::new(self.controller),
             )
         }
@@ -315,7 +316,7 @@ where
 
     /// Type-erases the channels used by this double solenoid, storing them at runtime.
     #[must_use]
-    pub fn erase_channels(self) -> ChannelErasedDoubleSolenoid<'a, Controller> {
+    pub fn erase_channels(self) -> ChannelErasedDoubleSolenoid<Controller> {
         ChannelErasedDoubleSolenoid {
             controller: self.controller,
             forward_channel: ForwardChannel::CHANNEL,
@@ -325,7 +326,10 @@ where
 
     /// Type-erases the channels and controller used by this double solenoid, storing them at runtime.
     #[must_use]
-    pub fn erase_all(self) -> AnyDoubleSolenoid<'a> {
+    pub fn erase_all(self) -> AnyDoubleSolenoid
+    where
+        Controller: Send + Sync + 'static
+    {
         AnyDoubleSolenoid {
             controller: self.controller,
             forward_channel: ForwardChannel::CHANNEL,
@@ -334,12 +338,12 @@ where
     }
 }
 
-impl<'a, Controller, ForwardChannel, BackwardChannel> DoubleSolenoid
-    for TypedDoubleSolenoid<'a, Controller, ForwardChannel, BackwardChannel>
+impl<Controller, ForwardChannel, BackwardChannel> DoubleSolenoid
+    for TypedDoubleSolenoid<Controller, ForwardChannel, BackwardChannel>
 where
     Controller: SolenoidController,
-    ForwardChannel: SolenoidChannel<'a, Controller = Controller>,
-    BackwardChannel: SolenoidChannel<'a, Controller = Controller>,
+    ForwardChannel: SolenoidChannel<Controller = Controller>,
+    BackwardChannel: SolenoidChannel<Controller = Controller>,
 {
     fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
         self.controller
@@ -360,17 +364,20 @@ where
 /// Useful to store several solenoids from the same controller homogeneously, e.g.
 /// in a slice or array. For a fully type-erased double solenoid, see [`AnyDoubleSolenoid`].
 /// For a fully typed double solenoid, see [`TypedDoubleSolenoid`].
-pub struct ChannelErasedDoubleSolenoid<'a, Controller> {
-    controller: &'a Controller,
+pub struct ChannelErasedDoubleSolenoid<Controller> {
+    controller: Arc<Controller>,
     forward_channel: u32,
     backward_channel: u32,
 }
 
-impl<'a, Controller: SolenoidController> ChannelErasedDoubleSolenoid<'a, Controller> {
+impl<Controller: SolenoidController> ChannelErasedDoubleSolenoid<Controller> {
     /// Type-erases the controller used by this double solenoid, storing it at runtime
     /// in addition to the channels already stored at runtime by this type.
     #[must_use]
-    pub fn erase_all(self) -> AnyDoubleSolenoid<'a> {
+    pub fn erase_all(self) -> AnyDoubleSolenoid
+    where
+        Controller: Send + Sync + 'static
+    {
         AnyDoubleSolenoid {
             controller: self.controller,
             forward_channel: self.forward_channel,
@@ -379,8 +386,8 @@ impl<'a, Controller: SolenoidController> ChannelErasedDoubleSolenoid<'a, Control
     }
 }
 
-impl<'a, Controller: SolenoidController> DoubleSolenoid
-    for ChannelErasedDoubleSolenoid<'a, Controller>
+impl<Controller: SolenoidController> DoubleSolenoid
+    for ChannelErasedDoubleSolenoid<Controller>
 {
     fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
         self.controller
@@ -399,13 +406,13 @@ impl<'a, Controller: SolenoidController> DoubleSolenoid
 /// solenoid homogeneously, e.g. in a slice or array. For a double solenoid with
 /// channels type-erased but not controller type, see [`ChannelErasedDoubleSolenoid`].
 /// For a fully-typed double solenoid, see [`TypedDoubleSolenoid`].
-pub struct AnyDoubleSolenoid<'a> {
-    controller: &'a dyn SolenoidController,
+pub struct AnyDoubleSolenoid {
+    controller: Arc<dyn SolenoidController + Send + Sync + 'static>,
     forward_channel: u32,
     backward_channel: u32,
 }
 
-impl<'a> DoubleSolenoid for AnyDoubleSolenoid<'a> {
+impl DoubleSolenoid for AnyDoubleSolenoid {
     fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
         self.controller
             .get_double_solenoid(self.forward_channel, self.backward_channel)

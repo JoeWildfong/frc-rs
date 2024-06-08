@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use uom::si::f64::{ElectricCurrent, ElectricPotential, Pressure};
 use wpihal_sys::HAL_REVPHCompressorConfigType;
 
@@ -22,26 +24,27 @@ impl RevPh {
     }
 
     #[must_use]
-    pub fn as_parts(&mut self) -> (RevCompressor<'_>, RevPneumatics<'_>) {
+    pub fn into_parts(self) -> (RevCompressor, RevPneumatics) {
+        let arc = Arc::new(self);
         (
-            RevCompressor { ph: self },
+            RevCompressor { ph: Arc::clone(&arc) },
             RevPneumatics {
-                channel0: RevChannel0 { ph: self },
-                channel1: RevChannel1 { ph: self },
-                channel2: RevChannel2 { ph: self },
-                channel3: RevChannel3 { ph: self },
-                channel4: RevChannel4 { ph: self },
-                channel5: RevChannel5 { ph: self },
-                channel6: RevChannel6 { ph: self },
-                channel7: RevChannel7 { ph: self },
-                channel8: RevChannel8 { ph: self },
-                channel9: RevChannel9 { ph: self },
-                channel10: RevChannel10 { ph: self },
-                channel11: RevChannel11 { ph: self },
-                channel12: RevChannel12 { ph: self },
-                channel13: RevChannel13 { ph: self },
-                channel14: RevChannel14 { ph: self },
-                channel15: RevChannel15 { ph: self },
+                channel0: RevChannel0 { ph: Arc::clone(&arc) },
+                channel1: RevChannel1 { ph: Arc::clone(&arc) },
+                channel2: RevChannel2 { ph: Arc::clone(&arc) },
+                channel3: RevChannel3 { ph: Arc::clone(&arc) },
+                channel4: RevChannel4 { ph: Arc::clone(&arc) },
+                channel5: RevChannel5 { ph: Arc::clone(&arc) },
+                channel6: RevChannel6 { ph: Arc::clone(&arc) },
+                channel7: RevChannel7 { ph: Arc::clone(&arc) },
+                channel8: RevChannel8 { ph: Arc::clone(&arc) },
+                channel9: RevChannel9 { ph: Arc::clone(&arc) },
+                channel10: RevChannel10 { ph: Arc::clone(&arc) },
+                channel11: RevChannel11 { ph: Arc::clone(&arc) },
+                channel12: RevChannel12 { ph: Arc::clone(&arc) },
+                channel13: RevChannel13 { ph: Arc::clone(&arc) },
+                channel14: RevChannel14 { ph: Arc::clone(&arc) },
+                channel15: RevChannel15 { ph: arc },
             },
         )
     }
@@ -116,11 +119,11 @@ impl TryFrom<HAL_REVPHCompressorConfigType> for RevCompressorMode {
     }
 }
 
-pub struct RevCompressor<'a> {
-    ph: &'a RevPh,
+pub struct RevCompressor {
+    ph: Arc<RevPh>,
 }
 
-impl<'a> RevCompressor<'a> {
+impl RevCompressor {
     /// Implementes formula from the REV Analog Pressure Sensor datasheet
     /// to convert voltage readings to pressure.
     fn voltage_to_pressure(v_out: ElectricPotential, v_cc: ElectricPotential) -> Pressure {
@@ -153,7 +156,7 @@ impl<'a> RevCompressor<'a> {
     }
 }
 
-impl<'a> Compressor for RevCompressor<'a> {
+impl Compressor for RevCompressor {
     fn running(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -180,7 +183,7 @@ impl<'a> Compressor for RevCompressor<'a> {
     }
 }
 
-impl<'a> DigitalCompressor for RevCompressor<'a> {
+impl DigitalCompressor for RevCompressor {
     fn get_pressure_switch(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -202,7 +205,7 @@ impl<'a> DigitalCompressor for RevCompressor<'a> {
     }
 }
 
-impl<'a> AnalogCompressor for RevCompressor<'a> {
+impl AnalogCompressor for RevCompressor {
     fn pressure(&self) -> Pressure {
         use uom::si::electric_potential::volt;
         // calculate the pressure in psi per the REV Analog Pressure Sensor datasheet
@@ -247,7 +250,7 @@ impl<'a> AnalogCompressor for RevCompressor<'a> {
     }
 }
 
-impl<'a> HybridCompressor for RevCompressor<'a> {
+impl HybridCompressor for RevCompressor {
     fn enable_hybrid(&mut self, min_pressure: Pressure, max_pressure: Pressure) {
         use uom::si::electric_potential::volt;
         let min_voltage =
@@ -273,19 +276,19 @@ impl<'a> HybridCompressor for RevCompressor<'a> {
 
 macro_rules! rev_channel {
     ($name:ident, $num:expr) => {
-        pub struct $name<'a> {
-            ph: &'a RevPh,
+        pub struct $name {
+            ph: Arc<RevPh>,
         }
 
-        impl<'a> SolenoidChannel<'a> for $name<'a> {
+        impl SolenoidChannel for $name {
             const CHANNEL: u32 = $num;
             type Controller = RevPh;
 
-            fn get_controller(&self) -> &'a Self::Controller {
+            fn into_controller(self) -> Arc<Self::Controller> {
                 self.ph
             }
 
-            unsafe fn new(controller: &'a Self::Controller) -> Self {
+            unsafe fn new(controller: Arc<Self::Controller>) -> Self {
                 Self { ph: controller }
             }
         }
@@ -309,21 +312,21 @@ rev_channel!(RevChannel13, 13);
 rev_channel!(RevChannel14, 14);
 rev_channel!(RevChannel15, 15);
 
-pub struct RevPneumatics<'a> {
-    pub channel0: RevChannel0<'a>,
-    pub channel1: RevChannel1<'a>,
-    pub channel2: RevChannel2<'a>,
-    pub channel3: RevChannel3<'a>,
-    pub channel4: RevChannel4<'a>,
-    pub channel5: RevChannel5<'a>,
-    pub channel6: RevChannel6<'a>,
-    pub channel7: RevChannel7<'a>,
-    pub channel8: RevChannel8<'a>,
-    pub channel9: RevChannel9<'a>,
-    pub channel10: RevChannel10<'a>,
-    pub channel11: RevChannel11<'a>,
-    pub channel12: RevChannel12<'a>,
-    pub channel13: RevChannel13<'a>,
-    pub channel14: RevChannel14<'a>,
-    pub channel15: RevChannel15<'a>,
+pub struct RevPneumatics {
+    pub channel0: RevChannel0,
+    pub channel1: RevChannel1,
+    pub channel2: RevChannel2,
+    pub channel3: RevChannel3,
+    pub channel4: RevChannel4,
+    pub channel5: RevChannel5,
+    pub channel6: RevChannel6,
+    pub channel7: RevChannel7,
+    pub channel8: RevChannel8,
+    pub channel9: RevChannel9,
+    pub channel10: RevChannel10,
+    pub channel11: RevChannel11,
+    pub channel12: RevChannel12,
+    pub channel13: RevChannel13,
+    pub channel14: RevChannel14,
+    pub channel15: RevChannel15,
 }

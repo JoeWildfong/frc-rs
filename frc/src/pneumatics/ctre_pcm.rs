@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{Compressor, DigitalCompressor, SolenoidChannel, SolenoidController};
 
 pub struct CtrePcm {
@@ -16,18 +18,19 @@ impl CtrePcm {
     }
 
     #[must_use]
-    pub fn as_parts(&mut self) -> (CtreCompressor<'_>, CtrePneumatics<'_>) {
+    pub fn into_parts(self) -> (CtreCompressor, CtrePneumatics) {
+        let arc = Arc::new(self);
         (
-            CtreCompressor { pcm: self },
+            CtreCompressor { pcm: Arc::clone(&arc) },
             CtrePneumatics {
-                channel0: CtreChannel0 { pcm: self },
-                channel1: CtreChannel1 { pcm: self },
-                channel2: CtreChannel2 { pcm: self },
-                channel3: CtreChannel3 { pcm: self },
-                channel4: CtreChannel4 { pcm: self },
-                channel5: CtreChannel5 { pcm: self },
-                channel6: CtreChannel6 { pcm: self },
-                channel7: CtreChannel7 { pcm: self },
+                channel0: CtreChannel0 { pcm: Arc::clone(&arc) },
+                channel1: CtreChannel1 { pcm: Arc::clone(&arc) },
+                channel2: CtreChannel2 { pcm: Arc::clone(&arc) },
+                channel3: CtreChannel3 { pcm: Arc::clone(&arc) },
+                channel4: CtreChannel4 { pcm: Arc::clone(&arc) },
+                channel5: CtreChannel5 { pcm: Arc::clone(&arc) },
+                channel6: CtreChannel6 { pcm: Arc::clone(&arc) },
+                channel7: CtreChannel7 { pcm: arc },
             },
         )
     }
@@ -73,11 +76,11 @@ impl Drop for CtrePcm {
     }
 }
 
-pub struct CtreCompressor<'a> {
-    pcm: &'a CtrePcm,
+pub struct CtreCompressor {
+    pcm: Arc<CtrePcm>,
 }
 
-impl<'a> Compressor for CtreCompressor<'a> {
+impl Compressor for CtreCompressor {
     fn running(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -104,7 +107,7 @@ impl<'a> Compressor for CtreCompressor<'a> {
     }
 }
 
-impl<'a> DigitalCompressor for CtreCompressor<'a> {
+impl DigitalCompressor for CtreCompressor {
     fn get_pressure_switch(&self) -> bool {
         unsafe {
             wpihal_sys::panic_on_hal_error(|status| {
@@ -132,19 +135,19 @@ impl<'a> DigitalCompressor for CtreCompressor<'a> {
 
 macro_rules! ctre_channel {
     ($name:ident, $num:expr) => {
-        pub struct $name<'a> {
-            pcm: &'a CtrePcm,
+        pub struct $name {
+            pcm: Arc<CtrePcm>,
         }
 
-        impl<'a> SolenoidChannel<'a> for $name<'a> {
+        impl SolenoidChannel for $name {
             const CHANNEL: u32 = $num;
             type Controller = CtrePcm;
 
-            fn get_controller(&self) -> &'a Self::Controller {
+            fn into_controller(self) -> Arc<Self::Controller> {
                 self.pcm
             }
 
-            unsafe fn new(controller: &'a Self::Controller) -> Self {
+            unsafe fn new(controller: Arc<Self::Controller>) -> Self {
                 Self { pcm: controller }
             }
         }
@@ -160,13 +163,13 @@ ctre_channel!(CtreChannel5, 5);
 ctre_channel!(CtreChannel6, 6);
 ctre_channel!(CtreChannel7, 7);
 
-pub struct CtrePneumatics<'a> {
-    pub channel0: CtreChannel0<'a>,
-    pub channel1: CtreChannel1<'a>,
-    pub channel2: CtreChannel2<'a>,
-    pub channel3: CtreChannel3<'a>,
-    pub channel4: CtreChannel4<'a>,
-    pub channel5: CtreChannel5<'a>,
-    pub channel6: CtreChannel6<'a>,
-    pub channel7: CtreChannel7<'a>,
+pub struct CtrePneumatics {
+    pub channel0: CtreChannel0,
+    pub channel1: CtreChannel1,
+    pub channel2: CtreChannel2,
+    pub channel3: CtreChannel3,
+    pub channel4: CtreChannel4,
+    pub channel5: CtreChannel5,
+    pub channel6: CtreChannel6,
+    pub channel7: CtreChannel7,
 }

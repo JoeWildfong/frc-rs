@@ -18,19 +18,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         object_folder.join("libvisa.so"),
     )?;
 
-    println!("cargo:rustc-link-search={}", object_folder.display());
+    println!("cargo::rustc-link-search={}", object_folder.display());
     println!(
-        "cargo:rustc-link-search={}",
+        "cargo::rustc-link-search={}",
         std::env::current_dir()?.join("built-shims").display()
     );
-    println!("cargo:rustc-link-lib=RoboRIO_FRC_ChipObject");
-    println!("cargo:rustc-link-lib=FRC_NetworkCommunication");
-    println!("cargo:rustc-link-lib=visa");
-    println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
-    println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
+    println!("cargo::rustc-link-lib=RoboRIO_FRC_ChipObject");
+    println!("cargo::rustc-link-lib=FRC_NetworkCommunication");
+    println!("cargo::rustc-link-lib=visa");
+    println!("cargo::rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
+    println!("cargo::rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
 
-    println!("cargo:rerun-if-changed=ni-libraries/");
-    println!("cargo:rerun-if-changed=built-shims/");
-    println!("cargo:include={}/include", ni_src.display());
+    println!("cargo::rerun-if-changed=ni-libraries/");
+    println!("cargo::rerun-if-changed=built-shims/");
+    println!("cargo::metadata=include={}/include", ni_src.display());
     Ok(())
 }

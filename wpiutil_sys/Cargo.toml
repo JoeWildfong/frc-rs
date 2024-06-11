@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 links = "wpiutil"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["maven"]
+maven = ["wpilib_build/maven"]
+from_source = ["wpilib_build/from_source"]
+from_source_parallel = ["wpilib_build/from_source_parallel"]
 
 [dependencies]
 
@@ -12,4 +16,4 @@ links = "wpiutil"
 ni_frc_sys = { path = "../ni_frc_sys" }
 
 [build-dependencies]
-wpilib_build = { path = "../wpilib_build", features = ["from_source_parallel"] }
+wpilib_build = { path = "../wpilib_build" }

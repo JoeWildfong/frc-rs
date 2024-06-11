@@ -4,13 +4,17 @@ version = "0.0.0"
 edition = "2021"
 links = "wpihal"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["maven"]
+maven = ["wpilib_build/maven", "wpiutil_sys/maven"]
+from_source = ["wpilib_build/from_source", "wpiutil_sys/from_source"]
+from_source_parallel = ["wpilib_build/from_source_parallel", "wpiutil_sys/from_source_parallel"]
 
 [dependencies]
-wpiutil_sys = { path = "../wpiutil_sys" }
+wpiutil_sys = { path = "../wpiutil_sys", default-features = false }
 
 [target.armv7-unknown-linux-gnueabi.dependencies]
 ni_frc_sys = { path = "../ni_frc_sys" }
 
 [build-dependencies]
-wpilib_build = { path = "../wpilib_build", features = ["from_source_parallel"] }
+wpilib_build = { path = "../wpilib_build" }

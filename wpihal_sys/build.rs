@@ -1,7 +1,8 @@
 fn main() {
     let is_roborio = std::env::var("TARGET").unwrap().as_str() == "armv7-unknown-linux-gnueabi";
     let build = wpilib_build::Build {
-        maven_name: "hal",
+        maven_url_name: "hal",
+        maven_link_name: "wpiHal",
         version: include_str!("version.txt"),
         base_name: "wpihal",
         srcs: vec![
@@ -17,15 +18,14 @@ fn main() {
         include: "wpihal/headers",
         include_env_vars: &["DEP_NI_FRC_INCLUDE", "DEP_WPIUTIL_INCLUDE"],
     };
-    build.build(wpilib_build::ArtifactType::Static);
+    build.build(wpilib_build::Linkage::Static);
 
     // relink all dependencies of wpihal
-    println!("cargo:rustc-link-lib=wpiutil");
     if is_roborio {
-        println!("cargo:rustc-link-lib=visa");
-        println!("cargo:rustc-link-lib=RoboRIO_FRC_ChipObject");
-        println!("cargo:rustc-link-lib=FRC_NetworkCommunication");
-        println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
-        println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
+        println!("cargo::rustc-link-lib=visa");
+        println!("cargo::rustc-link-lib=RoboRIO_FRC_ChipObject");
+        println!("cargo::rustc-link-lib=FRC_NetworkCommunication");
+        println!("cargo::rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
+        println!("cargo::rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
     }
 }

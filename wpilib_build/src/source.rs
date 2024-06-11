@@ -16,7 +16,7 @@ pub fn build(b: &super::Build) {
         .flag_if_supported("-std=c++20") // clang, gcc
         .flag_if_supported("/std:c++20") // msvc
         .include(b.include);
-    for src in b.srcs.iter() {
+    for src in &b.srcs {
         cc.files(glob_all(src));
     }
     for var in b.include_env_vars {
@@ -25,9 +25,9 @@ pub fn build(b: &super::Build) {
         }
     }
     cc.compile(b.base_name);
-    println!("cargo:rerun-if-changed={}/", b.base_name);
+    println!("cargo::rerun-if-changed={}/", b.base_name);
     println!(
-        "cargo:include={}/{}",
+        "cargo::metadata=include={}/{}",
         std::env::current_dir().unwrap().display(),
         b.include
     );

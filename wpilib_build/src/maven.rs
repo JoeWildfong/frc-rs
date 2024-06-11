@@ -28,8 +28,7 @@ impl MavenTarget {
             "x86_64-apple-darwin" | "aarch64-apple-darwin" => Some(Self::OsXUniversal),
             // untested
             "aarch64-pc-windows-msvc" => Some(Self::WindowsArm64),
-            // untested
-            "x64_64-pc-windows-msvc" => Some(Self::WindowsX86_64),
+            "x86_64-pc-windows-msvc" => Some(Self::WindowsX86_64),
             _ => None
         }
     }

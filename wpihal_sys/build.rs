@@ -1,38 +1,19 @@
-use std::path::PathBuf;
-
-fn unwrap_all_glob(pattern: &str) -> impl Iterator<Item = PathBuf> {
-    glob::glob(pattern).unwrap().map(Result::unwrap)
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let is_roborio = std::env::var("TARGET").unwrap().as_str() == "armv7-unknown-linux-gnueabi";
-    let mut build = cc::Build::new();
-    build
-        .cpp(true)
-        .warnings(false)
-        .flag_if_supported("-w") // clang, gcc
-        .flag_if_supported("/w") // msvc
-        .flag_if_supported("-Wno-psabi") // gcc
-        .flag_if_supported("-std=c++20") // clang, gcc
-        .flag_if_supported("/std:c++20") // msvc
-        .files(unwrap_all_glob("wpihal/sources/*.cpp"))
-        .files(unwrap_all_glob("wpihal/sources/cpp/**/*.cpp"))
-        .files(unwrap_all_glob("wpihal/sources/handles/**/*.cpp"))
-        .include("wpihal/headers");
-    if let Some(ni_headers) = std::env::var_os("DEP_NI_FRC_INCLUDE") {
-        build.include(ni_headers);
-    }
-    if let Some(wpiutil_headers) = std::env::var_os("DEP_WPIUTIL_INCLUDE") {
-        build.include(wpiutil_headers);
-    }
-
-    if is_roborio {
-        build.files(unwrap_all_glob("wpihal/sources/athena/**/*.cpp"));
-    } else {
-        build.files(unwrap_all_glob("wpihal/sources/sim/**/*.cpp"));
-    }
-
-    build.compile("wpihal");
+    let build = wpilib_build::Build {
+        maven_name: "hal",
+        version: include_str!("version.txt"),
+        base_name: "wpihal",
+        srcs: vec![
+            "wpihal/sources/*.cpp",
+            "wpihal/sources/cpp/**/*.cpp",
+            "wpihal/sources/handles/**/*.cpp",
+            if is_roborio { "wpihal/sources/athena/**/*.cpp" } else { "wpihal/sources/sim/**/*.cpp" }
+        ],
+        include: "wpihal/headers",
+        include_env_vars: &["DEP_NI_FRC_INCLUDE", "DEP_WPIUTIL_INCLUDE"],
+    };
+    build.build(wpilib_build::ArtifactType::Static);
 
     // relink all dependencies of wpihal
     println!("cargo:rustc-link-lib=wpiutil");
@@ -43,11 +24,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("cargo:rustc-link-lib=dylib:+verbatim=libNiFpgaLv.so.13");
         println!("cargo:rustc-link-lib=dylib:+verbatim=libnirio_emb_can.so.23");
     }
-
-    println!("cargo:rerun-if-changed=wpihal/");
-    println!(
-        "cargo:include={}/wpihal/headers",
-        std::env::current_dir()?.display()
-    );
-    Ok(())
 }

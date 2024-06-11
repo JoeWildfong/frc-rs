@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, fs::File, io::Write};
 
 use bindgen::callbacks::{IntKind, ParseCallbacks};
 
@@ -37,6 +37,9 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     bindings
         .write_to_file(crate::project_root().join("wpihal_sys/src/bindings.rs"))
         .expect("failed to write to file");
+
+    let mut version_file = File::create(crate::project_root().join("wpihal_sys/version.txt"))?;
+    write!(version_file, "{}", super::WPILIB_VERSION)?;
     Ok(())
 }
 

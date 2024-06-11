@@ -6,5 +6,6 @@ members = [
     "xtask",
     "frc",
     "toy_robot",
+    "wpilib_build",
 ]
 resolver = "2"

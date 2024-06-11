@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, fs::File, io::Write};
 
 use super::libraries;
 
@@ -22,5 +22,9 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     bindings
         .write_to_file(crate::project_root().join("wpiutil_sys/src/bindings.rs"))
         .expect("failed to write to file");
+
+    let mut version_file = File::create(crate::project_root().join("wpiutil_sys/version.txt"))?;
+    write!(version_file, "{}", super::WPILIB_VERSION)?;
+
     Ok(())
 }

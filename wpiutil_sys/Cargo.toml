@@ -12,5 +12,4 @@ links = "wpiutil"
 ni_frc_sys = { path = "../ni_frc_sys" }
 
 [build-dependencies]
-cc = { version = "1.0.83", features = ["parallel"] }
-glob = "0.3.1"
+wpilib_build = { path = "../wpilib_build", features = ["from_source_parallel"] }

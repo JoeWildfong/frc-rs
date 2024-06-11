@@ -5,7 +5,7 @@ fn main() {
         base_name: "wpiutil",
         srcs: vec!["wpiutil/sources/**/*.cpp"],
         include: "wpiutil/headers",
-        include_env_vars: &["DEP_NI_FRC_INCLUDE"]
+        include_env_vars: &["DEP_NI_FRC_INCLUDE"],
     };
     build.build(wpilib_build::ArtifactType::Static);
 }

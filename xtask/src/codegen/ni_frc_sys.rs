@@ -71,18 +71,18 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     Command::new(&compiler_path)
         .args([
             "-shared",
-            &format!("{}/embcan/main.c", shims_folder),
+            &format!("{shims_folder}/embcan/main.c"),
             "-o",
-            &format!("{}/libnirio_emb_can.so.23", shims_output),
+            &format!("{shims_output}/libnirio_emb_can.so.23"),
         ])
         .spawn()?
         .wait()?;
     Command::new(&compiler_path)
         .args([
             "-shared",
-            &format!("{}/fpgalv/main.c", shims_folder),
+            &format!("{shims_folder}/fpgalv/main.c"),
             "-o",
-            &format!("{}/libNiFpgaLv.so.13", shims_output),
+            &format!("{shims_output}/libNiFpgaLv.so.13"),
         ])
         .spawn()?
         .wait()?;

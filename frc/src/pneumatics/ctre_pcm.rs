@@ -21,15 +21,31 @@ impl CtrePcm {
     pub fn into_parts(self) -> (CtreCompressor, CtrePneumatics) {
         let arc = Arc::new(self);
         (
-            CtreCompressor { pcm: Arc::clone(&arc) },
+            CtreCompressor {
+                pcm: Arc::clone(&arc),
+            },
             CtrePneumatics {
-                channel0: CtreChannel0 { pcm: Arc::clone(&arc) },
-                channel1: CtreChannel1 { pcm: Arc::clone(&arc) },
-                channel2: CtreChannel2 { pcm: Arc::clone(&arc) },
-                channel3: CtreChannel3 { pcm: Arc::clone(&arc) },
-                channel4: CtreChannel4 { pcm: Arc::clone(&arc) },
-                channel5: CtreChannel5 { pcm: Arc::clone(&arc) },
-                channel6: CtreChannel6 { pcm: Arc::clone(&arc) },
+                channel0: CtreChannel0 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel1: CtreChannel1 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel2: CtreChannel2 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel3: CtreChannel3 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel4: CtreChannel4 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel5: CtreChannel5 {
+                    pcm: Arc::clone(&arc),
+                },
+                channel6: CtreChannel6 {
+                    pcm: Arc::clone(&arc),
+                },
                 channel7: CtreChannel7 { pcm: arc },
             },
         )

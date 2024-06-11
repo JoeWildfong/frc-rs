@@ -3,10 +3,10 @@ pub mod maven;
 #[cfg(feature = "from_source")]
 pub mod source;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum ArtifactType {
     Static,
-    Shared
+    Shared,
 }
 
 pub struct Build {

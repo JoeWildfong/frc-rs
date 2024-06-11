@@ -16,14 +16,12 @@ const WPILIB_VERSION: &str = "2024.2.1";
 
 const FRC_MAVEN_URL: &str = "https://frcmaven.wpi.edu/artifactory/release/edu/wpi/first";
 
-pub fn generate_bindings(crate_name: Option<String>) -> Result<(), Box<dyn Error>> {
-    match crate_name {
-        Some(t) => match t.as_str() {
-            "wpihal_sys" => wpihal_sys::generate_bindings()?,
-            "wpiutil_sys" => wpiutil_sys::generate_bindings()?,
-            "ni_frc_sys" => ni_frc_sys::generate_bindings()?,
-            invalid => return Err(format!("Invalid crate name: {invalid}").into()),
-        },
+pub fn generate_bindings(crate_name: &Option<String>) -> Result<(), Box<dyn Error>> {
+    match crate_name.as_deref() {
+        Some("wpihal_sys") => wpihal_sys::generate_bindings()?,
+        Some("wpiutil_sys") => wpiutil_sys::generate_bindings()?,
+        Some("ni_frc_sys") => ni_frc_sys::generate_bindings()?,
+        Some(invalid) => return Err(format!("Invalid crate name: {invalid}").into()),
         None => {
             wpihal_sys::generate_bindings()?;
             wpiutil_sys::generate_bindings()?;
@@ -52,8 +50,7 @@ pub fn find_wpilib_toolchain_root() -> Utf8PathBuf {
     if let Ok(path) = std::env::var("WPILIB_TOOLCHAIN").map(Utf8PathBuf::from) {
         assert!(
             path.exists(),
-            "WPILIB_TOOLCHAIN environment variable set to {}, but the path doesn't exist",
-            path
+            "WPILIB_TOOLCHAIN environment variable set to {path}, but the path doesn't exist"
         );
         return path;
     };
@@ -70,16 +67,14 @@ pub fn find_wpilib_toolchain_root() -> Utf8PathBuf {
     };
     assert!(
         default_location.exists(),
-        "Could not find WPILib toolchain at default location {}. Make sure the toolchain is installed, or try setting the WPILIB_TOOLCHAIN environment variable.",
-        default_location
+        "Could not find WPILib toolchain at default location {default_location}. Make sure the toolchain is installed, or try setting the WPILIB_TOOLCHAIN environment variable.",
     );
     default_location
 }
 
 pub fn find_wpilib_gcc() -> Utf8PathBuf {
     find_wpilib_toolchain_root().join(format!(
-        "roborio-academic/bin/arm-frc{}-linux-gnueabi-gcc",
-        WPILIB_YEAR
+        "roborio-academic/bin/arm-frc{WPILIB_YEAR}-linux-gnueabi-gcc"
     ))
 }
 
@@ -89,8 +84,8 @@ pub fn clang_args_for_toolchain(toolchain_path: &Utf8Path) -> impl Iterator<Item
     ));
     [
         "--target=armv7-unknown-linux-gnueabi".to_owned(),
-        format!("-isysroot{}", sysroot_path),
-        format!("--sysroot={}", sysroot_path),
+        format!("-isysroot{sysroot_path}"),
+        format!("--sysroot={sysroot_path}"),
         "-iwithsysroot/usr/lib/gcc/arm-nilrt-linux-gnueabi/12/include".to_owned(),
         "-iwithsysroot/usr/lib/gcc/arm-nilrt-linux-gnueabi/12/include-fixed".to_owned(),
         "-iwithsysroot/usr/include/c++/12".to_owned(),

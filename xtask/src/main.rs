@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => print_help(),
         Some(t) => match t.as_str() {
             "--help" => print_help(),
-            "codegen" => codegen::generate_bindings(env::args().nth(2))?,
+            "codegen" => codegen::generate_bindings(&env::args().nth(2))?,
             invalid => return Err(format!("Invalid task name: {invalid}").into()),
         },
     };

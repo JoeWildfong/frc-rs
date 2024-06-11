@@ -15,9 +15,9 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
             &super::find_wpilib_toolchain_root(),
         ))
         .clang_args([
-            format!("-isystem{}", headers_folder),
-            format!("-isystem{}", ni_frc_headers),
-            format!("-isystem{}", wpiutil_headers),
+            format!("-isystem{headers_folder}"),
+            format!("-isystem{ni_frc_headers}"),
+            format!("-isystem{wpiutil_headers}"),
         ])
         .header(headers_folder.join("hal/HAL.h"))
         .header(wrappers_folder.join("REVPH.h"))
@@ -31,8 +31,7 @@ pub fn generate_bindings() -> Result<(), Box<dyn Error>> {
     for name in Callbacks::ERROR_MACRO_CONSTANTS {
         bindings = bindings.allowlist_var(name);
     }
-    let bindings = bindings.generate()
-        .expect("failed to generate bindings");
+    let bindings = bindings.generate().expect("failed to generate bindings");
 
     bindings
         .write_to_file(crate::project_root().join("wpihal_sys/src/bindings.rs"))

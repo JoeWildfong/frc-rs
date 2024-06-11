@@ -8,7 +8,11 @@ fn main() {
             "wpihal/sources/*.cpp",
             "wpihal/sources/cpp/**/*.cpp",
             "wpihal/sources/handles/**/*.cpp",
-            if is_roborio { "wpihal/sources/athena/**/*.cpp" } else { "wpihal/sources/sim/**/*.cpp" }
+            if is_roborio {
+                "wpihal/sources/athena/**/*.cpp"
+            } else {
+                "wpihal/sources/sim/**/*.cpp"
+            },
         ],
         include: "wpihal/headers",
         include_env_vars: &["DEP_NI_FRC_INCLUDE", "DEP_WPIUTIL_INCLUDE"],

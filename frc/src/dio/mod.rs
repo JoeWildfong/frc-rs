@@ -23,7 +23,10 @@
 // ni's chipobject doesn't use this layout - it uses a c++ bitfield
 // wpihal has functions to convert a channel to a bit in ni's bitfield
 
-use std::{marker::PhantomData, sync::atomic::{AtomicBool, Ordering}};
+use std::{
+    marker::PhantomData,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use embedded_hal::digital::{ErrorType, InputPin, OutputPin, PinState};
 use embedded_hal_async::digital::Wait;

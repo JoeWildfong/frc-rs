@@ -178,7 +178,7 @@ impl<Channel: SolenoidChannel> TypedSolenoid<Channel> {
     #[must_use]
     pub fn erase_all(self) -> AnySolenoid
     where
-        Channel::Controller: Send + Sync + 'static
+        Channel::Controller: Send + Sync + 'static,
     {
         AnySolenoid {
             controller: self.controller,
@@ -294,7 +294,10 @@ where
         // If the channels are controlled by different controllers, we can't set
         // the double solenoid state in one write, potentially causing timing issues.
         let controller = forward_channel.into_controller();
-        assert!(Arc::ptr_eq(&controller, &backward_channel.into_controller()));
+        assert!(Arc::ptr_eq(
+            &controller,
+            &backward_channel.into_controller()
+        ));
         Self {
             controller,
             _phantom: PhantomData,
@@ -328,7 +331,7 @@ where
     #[must_use]
     pub fn erase_all(self) -> AnyDoubleSolenoid
     where
-        Controller: Send + Sync + 'static
+        Controller: Send + Sync + 'static,
     {
         AnyDoubleSolenoid {
             controller: self.controller,
@@ -376,7 +379,7 @@ impl<Controller: SolenoidController> ChannelErasedDoubleSolenoid<Controller> {
     #[must_use]
     pub fn erase_all(self) -> AnyDoubleSolenoid
     where
-        Controller: Send + Sync + 'static
+        Controller: Send + Sync + 'static,
     {
         AnyDoubleSolenoid {
             controller: self.controller,
@@ -386,9 +389,7 @@ impl<Controller: SolenoidController> ChannelErasedDoubleSolenoid<Controller> {
     }
 }
 
-impl<Controller: SolenoidController> DoubleSolenoid
-    for ChannelErasedDoubleSolenoid<Controller>
-{
+impl<Controller: SolenoidController> DoubleSolenoid for ChannelErasedDoubleSolenoid<Controller> {
     fn get(&self) -> Result<DoubleSolenoidState, InvalidDoubleSolenoidState> {
         self.controller
             .get_double_solenoid(self.forward_channel, self.backward_channel)

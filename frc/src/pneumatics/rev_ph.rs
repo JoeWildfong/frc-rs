@@ -27,23 +27,55 @@ impl RevPh {
     pub fn into_parts(self) -> (RevCompressor, RevPneumatics) {
         let arc = Arc::new(self);
         (
-            RevCompressor { ph: Arc::clone(&arc) },
+            RevCompressor {
+                ph: Arc::clone(&arc),
+            },
             RevPneumatics {
-                channel0: RevChannel0 { ph: Arc::clone(&arc) },
-                channel1: RevChannel1 { ph: Arc::clone(&arc) },
-                channel2: RevChannel2 { ph: Arc::clone(&arc) },
-                channel3: RevChannel3 { ph: Arc::clone(&arc) },
-                channel4: RevChannel4 { ph: Arc::clone(&arc) },
-                channel5: RevChannel5 { ph: Arc::clone(&arc) },
-                channel6: RevChannel6 { ph: Arc::clone(&arc) },
-                channel7: RevChannel7 { ph: Arc::clone(&arc) },
-                channel8: RevChannel8 { ph: Arc::clone(&arc) },
-                channel9: RevChannel9 { ph: Arc::clone(&arc) },
-                channel10: RevChannel10 { ph: Arc::clone(&arc) },
-                channel11: RevChannel11 { ph: Arc::clone(&arc) },
-                channel12: RevChannel12 { ph: Arc::clone(&arc) },
-                channel13: RevChannel13 { ph: Arc::clone(&arc) },
-                channel14: RevChannel14 { ph: Arc::clone(&arc) },
+                channel0: RevChannel0 {
+                    ph: Arc::clone(&arc),
+                },
+                channel1: RevChannel1 {
+                    ph: Arc::clone(&arc),
+                },
+                channel2: RevChannel2 {
+                    ph: Arc::clone(&arc),
+                },
+                channel3: RevChannel3 {
+                    ph: Arc::clone(&arc),
+                },
+                channel4: RevChannel4 {
+                    ph: Arc::clone(&arc),
+                },
+                channel5: RevChannel5 {
+                    ph: Arc::clone(&arc),
+                },
+                channel6: RevChannel6 {
+                    ph: Arc::clone(&arc),
+                },
+                channel7: RevChannel7 {
+                    ph: Arc::clone(&arc),
+                },
+                channel8: RevChannel8 {
+                    ph: Arc::clone(&arc),
+                },
+                channel9: RevChannel9 {
+                    ph: Arc::clone(&arc),
+                },
+                channel10: RevChannel10 {
+                    ph: Arc::clone(&arc),
+                },
+                channel11: RevChannel11 {
+                    ph: Arc::clone(&arc),
+                },
+                channel12: RevChannel12 {
+                    ph: Arc::clone(&arc),
+                },
+                channel13: RevChannel13 {
+                    ph: Arc::clone(&arc),
+                },
+                channel14: RevChannel14 {
+                    ph: Arc::clone(&arc),
+                },
                 channel15: RevChannel15 { ph: arc },
             },
         )
